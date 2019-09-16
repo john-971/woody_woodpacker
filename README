@@ -1,3 +1,15 @@
-todo
+DONE :
 
-Parser les segments et afficher la taille des caves avec leurs droits
+fonctionne si le programme trouve une cave dans le segment text
+gere la taille du payload dynamiquement et recalcul le bon offset pour l'ancien entry_point
+
+TODO :
+
+-chiffrement
+-compression
+-D'autres méthodes si on ne trouve pas de caves assez grandes
+
+
+NICE TO HAVE :
+- un dépacker ?
+- prendre une clef de chiffrement en parametre
