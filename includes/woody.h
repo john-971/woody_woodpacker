@@ -25,6 +25,7 @@ typedef struct 	s_info {
 	
 }				t_info;
 
+typedef unsigned char u_char;
 
 /*
 *	Debug.c
@@ -40,3 +41,11 @@ int		open_file(char *name);
 size_t		get_file_size(int fd);
 int		create_file(void);
 t_info		map_file(char *file_name, t_info info);
+
+
+/*
+*	rc4.c
+*/
+u_char	*init(u_char *key);
+u_char *generate_keystream(u_char *tab, u_char *input);
+void	cipher(u_char *input, u_char *keystream);

@@ -22,7 +22,8 @@ INCLUDES = -I $(PATH_INC)
 
 SRC =	$(PATH_SRC)main.c \
 		$(PATH_SRC)debug.c \
-		$(PATH_SRC)file_tools.c
+		$(PATH_SRC)file_tools.c \
+		$(PATH_SRC)rc4.c
 
 OBJ = $(SRC:.c=.o)
 

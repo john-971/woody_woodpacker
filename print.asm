@@ -1,13 +1,5 @@
 bits 64
-; int 0x80
-; int 0x80
-; mov rdi, 1
-; mov rsi, str
-; mov rdx, 13
-; mov eax, 1
-; syscall;
 
-; str: db "....WOODY....";
 global _start
 
 section .text
@@ -30,6 +22,6 @@ _start:
 ;   mov rdi, 0        ;   EXIT_SUCCESS
 ;   syscall           ; );
 
-section .rodata
+section .rodata0
   msg: db "....WOODY....", 10
   msglen: equ $ - msg

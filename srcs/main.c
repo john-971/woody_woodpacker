@@ -138,7 +138,6 @@ void	parse_pheader(t_info info)
 					printf("\n DIFF : %i\n", diff);
 					*test = diff;
 
-
 					write(info.new_fd, info.file, info.file_size);
 				}
 				
@@ -152,10 +151,16 @@ void	parse_pheader(t_info info)
 	
 }
 
-
 int 	main(int argc, char **argv)
 {
 	t_info info;
+	u_char	*tab;
+	u_char 	key[256];
+	u_char input[100];
+	u_char *keystream;
+
+	strncpy((char *) key, "Secret", 256);
+  	memcpy((char *) input, argv[2], 100);
 
 	if (argc < 2)
 	{
@@ -174,6 +179,10 @@ int 	main(int argc, char **argv)
 	detect_file_arch(info.file);
 	// section_d_assaut(info);
 	parse_pheader(info);
+	tab = init(key);
+	keystream = generate_keystream(tab, input);
+	cipher(input, keystream);
+	// printf("%hhn", tab);
 
 	munmap(info.file, info.file_size);
 	close(info.fd);
