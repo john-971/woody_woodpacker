@@ -154,13 +154,14 @@ void	parse_pheader(t_info info)
 int 	main(int argc, char **argv)
 {
 	t_info info;
-	u_char	*tab;
-	u_char 	key[256];
-	u_char input[100];
-	u_char *keystream;
+	char	*ptr;
+	// u_char	*tab;
+	// u_char 	key[256];
+	// u_char input[100];
+	// u_char *keystream;
 
-	strncpy((char *) key, "Secret", 256);
-  	memcpy((char *) input, argv[2], 100);
+	// strncpy((char *) key, "Secret", 256);
+  	// memcpy((char *) input, argv[2], 100);
 
 	if (argc < 2)
 	{
@@ -171,17 +172,18 @@ int 	main(int argc, char **argv)
 	info.new_fd = create_file();
 	info = map_file(argv[1], info);
 
-	info.exploit_fd = open_file("./print.bin");
-	info.exploit_size = get_file_size(info.exploit_fd);
-
 	printf("Exploit size : %lu\n", info.exploit_size);
 
 	detect_file_arch(info.file);
 	// section_d_assaut(info);
 	parse_pheader(info);
-	tab = init(key);
-	keystream = generate_keystream(tab, input);
-	cipher(input, keystream);
+	
+	ptr = diff;
+	ptr[0] = '1';
+	printf("DEBUG : %p", &ptr);
+	// tab = init(key);
+	// keystream = generate_keystream(tab, input);
+	// cipher(input, keystream);
 	// printf("%hhn", tab);
 
 	munmap(info.file, info.file_size);

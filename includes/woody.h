@@ -14,6 +14,9 @@
 #define ALIGN 
 #define PAGE_SIZE 4096
 
+// extern char *print_woody;
+extern int diff;
+
 typedef struct 	s_info {
 
 	char 		*file;

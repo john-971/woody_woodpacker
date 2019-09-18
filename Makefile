@@ -10,29 +10,32 @@
 #                                                                              #
 #******************************************************************************#
 
-CC=gcc -Wall -Werror -Wextra $(INCLUDES)
-NAME = packer
+CC = gcc
+FLAGS = -Wall -Werror -Wextra $(INCLUDES)
+AS=nasm -f elf64
 
-PATH_SRC = ./srcs/
+NAME = woody_woodpacker
+
 PATH_INC = ./includes/
 
 
 INCLUDES = -I $(PATH_INC)
 
+SOURCES_ASM = 	./srcs/asm/print.s
 
-SRC =	$(PATH_SRC)main.c \
-		$(PATH_SRC)debug.c \
-		$(PATH_SRC)file_tools.c \
-		$(PATH_SRC)rc4.c
+SOURCES = 		./srcs/main.c \
+				./srcs/debug.c \
+				./srcs/file_tools.c \
+				./srcs/rc4.c
 
-OBJ = $(SRC:.c=.o)
+OBJ = $(SOURCES:.c=.o) $(SOURCES_ASM:.s=.o)
 
 .PHONY: clean fclean re
 
 all: $(NAME)
 
 $(NAME): $(OBJ)
-	$(CC) $(OBJ) -o $(NAME)
+	$(CC) $(FLAGS) $(OBJ) -o $@
 	@echo "\033[36m◉ \033[33mmake is done\033[0m"
 
 
