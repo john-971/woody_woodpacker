@@ -97,6 +97,7 @@ void	parse_pheader(t_info info)
 	uint32_t	cave_size;
 	uint32_t	old_entry;
 	uint32_t	new_entry;
+	int 		entry_diff;
 	
 
 	
@@ -114,9 +115,7 @@ void	parse_pheader(t_info info)
 				{
 					debug("Found cave with enough space:");	
 					printf("%u\n", cave_size);
-					
 					new_entry = pheader[i].p_vaddr + pheader[i].p_memsz;
-					printf("New Entry %i\n %i\n", new_entry, new_entry % 16);
 					if (new_entry % 16 != 0)
 					{
 						new_entry += 16 - (new_entry % 16);
@@ -130,13 +129,12 @@ void	parse_pheader(t_info info)
 					//JSAIS PAS GROS
 					pheader[i].p_memsz += info.exploit_size;
 					pheader[i].p_filesz += info.exploit_size;
-					int diff = new_entry - old_entry;
-					read(info.exploit_fd, info.file + new_entry, info.exploit_size);
-
-					int *test = memchr(info.file + new_entry, 'A', info.exploit_size);
+					entry_diff = new_entry - old_entry;
+					memcpy(info.file + new_entry, (void *)&print_woody, info.exploit_size);
 					
-					printf("\n DIFF : %i\n", diff);
-					*test = diff;
+					int *test = memchr(info.file + new_entry, 'A', info.exploit_size);
+					printf("%d\n %d\n %d\n", (void *)&test, (void *)&diff, entry_diff);
+					*test = entry_diff;
 
 					write(info.new_fd, info.file, info.file_size);
 				}
@@ -154,7 +152,6 @@ void	parse_pheader(t_info info)
 int 	main(int argc, char **argv)
 {
 	t_info info;
-	char	*ptr;
 	// u_char	*tab;
 	// u_char 	key[256];
 	// u_char input[100];
@@ -168,23 +165,23 @@ int 	main(int argc, char **argv)
 		print_usage(argv[0]);
 		return (1);
 	}
-	info.fd = open_file(argv[1]);
-	info.new_fd = create_file();
-	info = map_file(argv[1], info);
+	// init("tamere");
+	// cipher("Test");
+	// info.fd = open_file(argv[1]);
+	// info.new_fd = create_file();
+	// info.exploit_size = (char *)&print_woody_end - (char *)&print_woody;
+	// printf("Exploit size : %lu\n", info.exploit_size);
+	// info = map_file(argv[1], info);
 
-	printf("Exploit size : %lu\n", info.exploit_size);
-
-	detect_file_arch(info.file);
-	// section_d_assaut(info);
-	parse_pheader(info);
+	// detect_file_arch(info.file);
+	// // section_d_assaut(info);
+	// parse_pheader(info);
 	
-	ptr = diff;
-	ptr[0] = '1';
-	printf("DEBUG : %p", &ptr);
-	// tab = init(key);
-	// keystream = generate_keystream(tab, input);
-	// cipher(input, keystream);
-	// printf("%hhn", tab);
+	
+	// // tab = init(key);
+	// // keystream = generate_keystream(tab, input);
+	cipher("ABCDEFGH", "i am a secret key ", 10);
+	// // printf("%hhn", tab);
 
 	munmap(info.file, info.file_size);
 	close(info.fd);
