@@ -6,13 +6,21 @@ void swap(u_char *i, u_char *j) {
 	temp = *i;
 	*i = *j;
 	*j = temp;
+	// if (*i != *j)
+	// {
+	// 	// printf("%c : %c\n", *i, *j);
+	// 	*i = *i ^ *j;
+	// 	*j = *j ^ *i;
+	// 	*i = *i ^ *j;
+	// 	// printf("%c : %c\n", *i, *j);
+	// }
+	
 }
 
 u_char	*init(u_char *key)
 {
 	int i = -1;
-	int j = -1;
-	int key_len = strlen((char *)key);
+	int j = 0;
 	u_char *tab = malloc(256 * sizeof(u_char));
 
 	if (tab == NULL)
@@ -24,11 +32,31 @@ u_char	*init(u_char *key)
 		tab[i] = i;
 		write(1, &tab[i], 1);
 	}
+	// write(1,"\n", 1);
 	i = -1;
 	while (i++ < 255)
 	{
-		j = (j +tab[i] + key[i % key_len]) % 256;
-		swap(&tab[i], &tab[j]);
+		j = (j + tab[i] + key[i & 15]) & 255;		//65, 132, 201, 16
+		// printf("%d \n", j);
+		// printf("%d : %d\n", tab[i], tab[j]);
+		// swap(&tab[i], &tab[j]);
+		/*
+		0 : 65
+		65 : 0
+		-----------
+		1 : 132
+		132 : 1
+		*/
+		tab[i] ^= tab[j];
+		tab[j] ^= tab[i];
+		tab[i] ^= tab[j];
+		// printf("%d : %d\n", tab[i], tab[j]);
+		// printf("-----------\n");
+	}
+	i = -1;
+	while(i++ < 255)
+	{
+		// tab[i] = i;
 		write(1, &tab[i], 1);
 	}
 	return (tab);
@@ -46,10 +74,10 @@ u_char *generate_keystream(u_char *tab, u_char *input)
 
 	while (k++ < len)
 	{
-		i = (i + 1) % 256;
-		j = (j + tab[i]) % 256;
+		i = (i + 1) & 255;
+		j = (j + tab[i]) & 255;
 		swap(&tab[i], &tab[j]);
-		keystream[k] = tab[(tab[i] + tab[j]) % 256];
+		keystream[k] = tab[(tab[i] + tab[j]) & 255];
 	}
 	return (keystream);
 }

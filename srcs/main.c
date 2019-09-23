@@ -152,7 +152,7 @@ void	parse_pheader(t_info info)
 int 	main(int argc, char **argv)
 {
 	t_info info;
-	// u_char	*tab;
+	u_char	*tab;
 	// u_char 	key[256];
 	// u_char input[100];
 	// u_char *keystream;
@@ -178,10 +178,10 @@ int 	main(int argc, char **argv)
 	// parse_pheader(info);
 	
 	
-	// // tab = init(key);
+	// tab = init("ABCDEFGHIJKMLNOP");
 	// // keystream = generate_keystream(tab, input);
-	cipher("ABCDEFGH", "i am a secret key ", 10);
-	// // printf("%hhn", tab);
+	cipher("AAAAAAAAAA", "ABCDEFGHIJKMLNOP", 10);
+	// printf("%hhn", tab);
 
 	munmap(info.file, info.file_size);
 	close(info.fd);
