@@ -181,11 +181,13 @@ cipher:
 	and eax, 255
 	cdqe
 	movzx edx, BYTE [rsp + 288 + rax]	; keystream[i & 255]
-	mov rcx, [rsp]
-	movzx ecx, BYTE [rcx + rax]			; input[i]
+	mov rsi, [rsp]						; get input pointer
+	mov eax, ecx						; retrieve saved i
+	cdqe
+	movzx ecx, BYTE [rsi + rax]			; input[i]
 	xor ecx, edx
-	mov rdx, [rsp]						; input[i] ^ keystream[i & 255]
-	mov BYTE [rdx + rax], cl			; input[i] ^= keystream[i & 255]
+	mov rsi, [rsp]						; input[i] ^ keystream[i & 255]
+	mov BYTE [rsi + rax], cl			; input[i] ^= keystream[i & 255]
 	jmp .rc4 + 8
 
 .exit:

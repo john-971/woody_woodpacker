@@ -167,27 +167,6 @@ decipher:
 	mov BYTE [rsp + 288 + rax], cl	; keystream[k] = tab[(tab[i] + tab[j]) & 255]
 	jmp .keystream + 16
 
-
-; .rc4:
-; 	mov DWORD [rsp + 24], -1			; i = -1
-
-; 	mov eax, DWORD [rsp + 24]			; i
-; 	mov ecx, DWORD [rsp + 16]			; input_len
-; 	cmp eax, ecx
-; 	jge .end
-; 	add eax, 1
-; 	mov DWORD [rsp + 24], eax			; i += 1
-; 	mov ecx, eax						; save i
-; 	and eax, 255
-; 	cdqe
-; 	movzx edx, BYTE [rsp + 288 + rax]	; keystream[i & 255]
-; 	mov rcx, [rsp]
-; 	movzx ecx, BYTE [rcx + rax]			; input[i]
-; 	xor ecx, edx
-; 	mov rdx, [rsp]						; input[i] ^ keystream[i & 255]
-; 	mov BYTE [rdx + rax], cl			; input[i] ^= keystream[i & 255]
-; 	jmp .rc4 + 8
-
 .rc4_rev:
 	mov DWORD [rsp + 24], -1			; i = -1
 
@@ -201,11 +180,13 @@ decipher:
 	and eax, 255
 	cdqe
 	movzx edx, BYTE [rsp + 288 + rax]	; keystream[i & 255]
-	mov rcx, [rsp]
-	movzx ecx, BYTE [rcx + rax]			; input[i]
+	mov rsi, [rsp]						; get input pointer
+	mov eax, ecx						; retrieve saved i
+	cdqe
+	movzx ecx, BYTE [rsi + rax]			; input[i]
 	xor ecx, edx
-	mov rdx, [rsp]						; input[i] ^ keystream[i & 255]
-	mov BYTE [rdx + rax], cl			; input[i] ^= keystream[i & 255]
+	mov rsi, [rsp]						; input[i] ^ keystream[i & 255]
+	mov BYTE [rsi + rax], cl			; input[i] ^= keystream[i & 255]
 	jmp .rc4_rev + 8
 
 .exit:
