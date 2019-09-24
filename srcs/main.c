@@ -153,20 +153,18 @@ int 	main(int argc, char **argv)
 {
 	t_info info;
 	u_char	*tab;
-	// u_char 	key[256];
-	// u_char input[100];
-	// u_char *keystream;
+	u_char *input;
+	u_char *keystream;
+	int len;
 
-	// strncpy((char *) key, "Secret", 256);
-  	// memcpy((char *) input, argv[2], 100);
-
+  	// input = strdup(" condimentum nonummy, tincidunt alias blandit tellus massa justo. Vestibulum proin donec, lectus donec ligula fusce dui ante. Donec sed placerat, pulvinar pharetra, et vestibulum laoreet eget elit vitae egestas. Feugiat in pede integer, vitae erat accumsan sed. Neque amet felis rutrum in ut, at est morbi. Lectus wisi mauris tempor tortor mi, in justo, etiam nisl scelerisque in massa, posuere pellentesque sodales odio bibendum.Mauris cum libero, id imperdiet nulla, eros ac arcu commodo at sapien, at perferendis congue sit. Nunc sem amet auctor id sit, fusce nisl, faucibus rutrum, eget quisque odio, dolor pulvinar mauris. Nam pede eu vitae nulla, vestibulum integer amet mauris. Penatibus vestibulum consectetur, lobortis torquent tincidunt accumsan pede urna suscipit, volutpat ac convallis, donec etiam, adipiscing sit sit ut. Risus magnis nulla at tristique sollicitudin fusce. In vehicula sit, in vivamus bibendum elit nonummy imperdiet arcu, turpis id, lorem luctus morbi potenti lobortis, massa felis adipiscing arcu enim varius. Sed sed nec nam praesent convallis, vehicula sed wisi amet. Aut cum nibh harum nunc a sed, inceptos ut tortor nisl lorem odio, ut porttitor, cras mauris in enim eros delectus. Maecenas lectus sit. Dolor pharetra phasellus id hendrerit, in nam proin in lorem ut.Leo per purus platea, aliquam pellentesque ultricies, ante quam arcu suspendisse varius sed morbi, felis sem et, parturient vivamus etiam nullam. Duis libero vestibulum ligula quis, pede lacinia fermentum tristique ut eget, at adipiscing magna sit torquent, eget augue a dolorem magna, erat purus. Vitae a amet vitae vitae, diam et phasellus. Sit porta eget velit est dolor, etiam mollis id wisi, dapibus aliquet nostra ligula nibh molestie nonummy, iaculis mi ultrices. Mollis penatibus tempus libero. Adipisicing ullamcorper lacinia duis magna volutpat vestibulum, ut libero cursus placerat, metus at consequat libero. Laoreet vel, at enim pretium, at eros dolor, est erat nec sem. Proin massa, aliquet pulvinar wisi lorem ut et sed, aliquam lectus fermentum a ornare, in nulla elit scelerisque, eu nibh. Mauris sollicitudin morbi ante lorem, laoreet eu quis, morbi pellentesque wisi, mauris neque, donec donec a. Purus lectus a mollis, velit vehicula eget tristique nibh consectetuer. Porttitor mauris vitae. Nunc blandit nunc congue et leo, elit in et et urna.");
+	input = strdup("ABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMAAAAAAAAAAAAAAbbbbbQQQQQ");
+	len = strlen(input);
 	if (argc < 2)
 	{
 		print_usage(argv[0]);
 		return (1);
 	}
-	// init("tamere");
-	// cipher("Test");
 	// info.fd = open_file(argv[1]);
 	// info.new_fd = create_file();
 	// info.exploit_size = (char *)&print_woody_end - (char *)&print_woody;
@@ -179,12 +177,20 @@ int 	main(int argc, char **argv)
 	
 	
 	// tab = init("ABCDEFGHIJKMLNOP");
-	// // keystream = generate_keystream(tab, input);
-	cipher("AAAAAAAAAA", "ABCDEFGHIJKMLNOP", 10);
-	// printf("%hhn", tab);
+	// keystream = generate_keystream(tab);
+	// cipher_rc4(input, keystream);
 
-	munmap(info.file, info.file_size);
-	close(info.fd);
-	close(info.new_fd);
+	write(1, "\nTo Crypt :\n", 12);
+	write(1, input, len);
+	input = cipher(input, "ABCDEFGHIJKMLNOP", len);
+	write(1, "\n\nCrypt\n", 9);
+	write(1, input, len);
+	input = decipher(input, "ABCDEFGHIJKMLNOP", len);
+	write(1, "\n\nDecrypt\n", 11);
+	write(1, input, len);
+
+	// munmap(info.file, info.file_size);
+	// close(info.fd);
+	// close(info.new_fd);
 	return (0);
 }

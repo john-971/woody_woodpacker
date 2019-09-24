@@ -22,7 +22,8 @@ PATH_INC = ./includes/
 INCLUDES = -I $(PATH_INC)
 
 SOURCES_ASM = 	./srcs/asm/print.s\
-				./srcs/asm/crypt.s
+				./srcs/asm/crypt.s\
+				./srcs/asm/decrypt.s
 
 SOURCES = 		./srcs/main.c \
 				./srcs/debug.c \

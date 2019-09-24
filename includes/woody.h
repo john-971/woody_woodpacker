@@ -18,7 +18,8 @@
 extern int diff;
 extern int print_woody;
 extern int	print_woody_end;
-extern void	cipher(char *input, char *key, int input_len);
+extern u_char	*cipher(char *input, char *key, int input_len);
+extern u_char	*decipher(char *input, char *key, int input_len);
 
 typedef struct 	s_info {
 
@@ -53,5 +54,5 @@ t_info		map_file(char *file_name, t_info info);
 *	rc4.c
 */
 u_char	*init(u_char *key);
-u_char *generate_keystream(u_char *tab, u_char *input);
+u_char *generate_keystream(u_char *tab);
 void	cipher_rc4(u_char *input, u_char *keystream);

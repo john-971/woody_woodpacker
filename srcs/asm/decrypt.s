@@ -1,9 +1,9 @@
 
 section .text
-global	cipher
+global	decipher
 
 
-cipher:
+decipher:
 
 	push rbp
 	mov rbp, rsp
@@ -105,7 +105,7 @@ cipher:
 
 	mov eax, DWORD [rsp + 548]		; k;
 	cmp eax, 255
-	jge .rc4
+	jge .rc4_rev
 	mov eax, DWORD [rsp + 548]		;k
 	add eax, 1
 	mov DWORD [rsp + 548], eax		;k++
@@ -168,7 +168,27 @@ cipher:
 	jmp .keystream + 16
 
 
-.rc4:
+; .rc4:
+; 	mov DWORD [rsp + 24], -1			; i = -1
+
+; 	mov eax, DWORD [rsp + 24]			; i
+; 	mov ecx, DWORD [rsp + 16]			; input_len
+; 	cmp eax, ecx
+; 	jge .end
+; 	add eax, 1
+; 	mov DWORD [rsp + 24], eax			; i += 1
+; 	mov ecx, eax						; save i
+; 	and eax, 255
+; 	cdqe
+; 	movzx edx, BYTE [rsp + 288 + rax]	; keystream[i & 255]
+; 	mov rcx, [rsp]
+; 	movzx ecx, BYTE [rcx + rax]			; input[i]
+; 	xor ecx, edx
+; 	mov rdx, [rsp]						; input[i] ^ keystream[i & 255]
+; 	mov BYTE [rdx + rax], cl			; input[i] ^= keystream[i & 255]
+; 	jmp .rc4 + 8
+
+.rc4_rev:
 	mov DWORD [rsp + 24], -1			; i = -1
 
 	mov eax, DWORD [rsp + 24]			; i
@@ -186,7 +206,7 @@ cipher:
 	xor ecx, edx
 	mov rdx, [rsp]						; input[i] ^ keystream[i & 255]
 	mov BYTE [rdx + rax], cl			; input[i] ^= keystream[i & 255]
-	jmp .rc4 + 8
+	jmp .rc4_rev + 8
 
 .exit:
 
