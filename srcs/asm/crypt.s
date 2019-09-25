@@ -7,15 +7,15 @@ cipher:
 
 	push rbp
 	mov rbp, rsp
-	sub rsp, 560
+	sub rsp, 304
 	mov QWORD [rsp], rdi 			;save for param input pointer
 	mov QWORD [rsp + 8], rsi		;save for param key pointer
 	mov QWORD [rsp + 16], rdx		;save for param input_len
 	mov DWORD [rsp + 24], -1		;i = -1
 	mov DWORD [rsp + 28], 0			;j = 0
 									;rsp + 32 = tab
-									;rsp + 288 = keystream
-	mov DWORD [rsp + 548], -1		;k = -1
+	mov QWORD [rsp + 288], rcx		;rsp + 288 = keystream
+	mov DWORD [rsp + 296], -1		;k = -1 		/!\ changer pour gagner de la stack
 	jmp .init
 
 .init:								;Create tab[255] = 0,1,2,3...255
@@ -103,12 +103,12 @@ cipher:
 	mov DWORD [rsp + 24], 0			; i = 0
 	mov DWORD [rsp + 28], 0			; j = 0
 
-	mov eax, DWORD [rsp + 548]		; k;
+	mov eax, DWORD [rsp + 296]		; k;
 	cmp eax, 255
 	jge .rc4
-	mov eax, DWORD [rsp + 548]		;k
+	mov eax, DWORD [rsp + 296]		;k
 	add eax, 1
-	mov DWORD [rsp + 548], eax		;k++
+	mov DWORD [rsp + 296], eax		;k++
 
 	mov eax, DWORD [rsp + 24]		; i;
 	add eax, 1						; i += 1
@@ -162,9 +162,10 @@ cipher:
 	cdqe
 	movzx ecx, BYTE [rsp + 32 + rax]; tab[(tab[i] + tab[j]) & 255]
 
-	mov eax, DWORD [rsp + 548]		;k
+	mov rsi, [rsp + 288]
+	mov eax, DWORD [rsp + 296]		;k
 	cdqe
-	mov BYTE [rsp + 288 + rax], cl	; keystream[k] = tab[(tab[i] + tab[j]) & 255]
+	mov BYTE [rsi + rax], cl	; keystream[k] = tab[(tab[i] + tab[j]) & 255]
 	jmp .keystream + 16
 
 
@@ -180,7 +181,8 @@ cipher:
 	mov ecx, eax						; save i
 	and eax, 255
 	cdqe
-	movzx edx, BYTE [rsp + 288 + rax]	; keystream[i & 255]
+	mov rdi, [rsp + 288]
+	movzx edx, BYTE [rdi + rax]			; keystream[i & 255]
 	mov rsi, [rsp]						; get input pointer
 	mov eax, ecx						; retrieve saved i
 	cdqe
@@ -193,7 +195,7 @@ cipher:
 .exit:
 
 
-	mov rax, QWORD [rsp]
+	mov rax, QWORD [rsp + 288]
 	mov	rsp, rbp
 	pop	rbp
 	ret

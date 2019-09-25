@@ -17,9 +17,10 @@
 // extern char *print_woody;
 extern int diff;
 extern int print_woody;
-extern int	print_woody_end;
-extern u_char	*cipher(char *input, char *key, int input_len);
+extern int print_woody_end;
+extern u_char	*cipher(char *input, char *key, int input_len, u_char *keystream);
 extern u_char	*decipher(char *input, char *key, int input_len);
+extern int		end_decipher;
 
 typedef struct 	s_info {
 

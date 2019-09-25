@@ -1,6 +1,7 @@
 
 section .text
 global	decipher
+global 	end_decipher
 
 
 decipher:
@@ -190,12 +191,16 @@ decipher:
 	jmp .rc4_rev + 8
 
 .exit:
-
-
 	mov rax, QWORD [rsp]
 	mov	rsp, rbp
 	pop	rbp
 	ret
+
+input:	dd 0x42424242
+key:	db "CCCCCCCCCCCCCCCC"
+; msg: db "....WOODY....", 10
+
+end_decipher:
 
 	; mov rsi, [rsp]	  ;pointer to print
 	; mov eax, 1        ; write(
