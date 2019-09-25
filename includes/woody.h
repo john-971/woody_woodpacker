@@ -26,10 +26,11 @@ typedef struct 	s_info {
 
 	char 		*file;
 	size_t		file_size;
-	size_t		exploit_size;
+	uint32_t	exploit_size;
 	int			fd;
 	int			exploit_fd;
 	int			new_fd;
+	char		*keystream;
 	
 }				t_info;
 

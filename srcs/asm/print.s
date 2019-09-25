@@ -22,10 +22,6 @@ print_woody:
   xor rdx, rdx
   jmp rax
 
-;   mov rax, 60       ; exit(
-;   mov rdi, 0        ;   EXIT_SUCCESS
-;   syscall           ; );
-
 diff: dd 0x41414141
 msg: db "....WOODY....", 10
 ; msglen: equ $ - msg

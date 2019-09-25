@@ -88,12 +88,13 @@ void	section_d_assaut(t_info info)
 	}
 }
 
-void	align(uint32_t *offset)
+uint32_t	align(uint32_t offset)
 {
-	if (*offset % 16 != 0)
+	if (offset % 16 != 0)
 	{
-		*offset += 16 - (*offset % 16);
+		return (16 - (offset % 16));
 	}
+	return (0);
 }
 
 void	parse_pheader(t_info info)
@@ -105,11 +106,14 @@ void	parse_pheader(t_info info)
 	uint32_t	old_entry;
 	uint32_t	new_entry;
 	int 		entry_diff;
+	uint32_t	woody_size = ((char *)&print_woody_end - (char *)&print_woody);
+	uint32_t	decipher_size = (char *)&end_decipher - (char *)&decipher;
 	
 
 	
 	header = (Elf64_Ehdr *)info.file;
 	pheader = (Elf64_Phdr *)(info.file + header->e_phoff); 
+	// printf("TAMERE %d\n %d\n", woody_size, decipher_size);
 	while(i++ < header->e_phnum)
 	{
 		if (pheader[i].p_type == PT_LOAD && pheader[i].p_flags == (PF_R + PF_X))
@@ -123,7 +127,7 @@ void	parse_pheader(t_info info)
 					debug("Found cave with enough space:");	
 					printf("%u\n", cave_size);
 					new_entry = pheader[i].p_vaddr + pheader[i].p_memsz;
-					align(&new_entry);
+					new_entry += align(new_entry);
 					printf("New Entry Aligned %x\n", new_entry);
 
 					old_entry = header->e_entry;
@@ -131,23 +135,28 @@ void	parse_pheader(t_info info)
 
 					//T'es sure ???
 					//JSAIS PAS GROS
-					pheader[i].p_memsz += info.exploit_size;
-					pheader[i].p_filesz += info.exploit_size;
+					pheader[i].p_memsz += info.exploit_size + align(woody_size) ; //exploit size + alignement
+					pheader[i].p_filesz += info.exploit_size + align(woody_size);
+					printf("Total sze of section text : %x\n", pheader[i].p_memsz);
 					entry_diff = new_entry - old_entry;
-					memcpy(info.file + new_entry, (void *)&print_woody, info.exploit_size);
+					memcpy(info.file + new_entry, (void *)&print_woody, woody_size);
 					
-					int *test = memchr(info.file + new_entry, 'A', info.exploit_size);
-					printf("%x\n %x\n %d\n", *test, (void *)&diff, entry_diff);
+					int *test = memchr(info.file + new_entry, 'A', woody_size);
+					// printf("%x\n %x\n %d\n", *test, (void *)&diff, entry_diff);
 					*test = entry_diff;
 
-
-					// cipher((void *)info.file + pheader[i].p_vaddr, "ABCDEFGHIJKMLNOP", pheader[i].p_memsz + info.exploit_size);
+					cipher((void *)info.file + pheader[i].p_vaddr, "ABCDEFGHIJKMLNOP", pheader[i].p_memsz, info.keystream);
 					
-					new_entry += ((char *)&print_woody_end - (char *)&print_woody);
-					align(&new_entry);
+					new_entry += woody_size;
+					new_entry += align(new_entry);
 					printf("Decipher offset : %x\n", new_entry);
-					memcpy(info.file + new_entry, (void *)&decipher, (char *)&end_decipher - (char *)&decipher);
+					memcpy(info.file + new_entry, (void *)&decipher, decipher_size);
 					
+
+					memcpy(info.file + new_entry + decipher_size, info.keystream, 255);
+
+				
+
 					header->e_entry = new_entry;
 					// *test = memchr(info.file + new_entry, 'C', info.exploit_size);
 					// *test = 
@@ -185,30 +194,31 @@ int 	main(int argc, char **argv)
 		print_usage(argv[0]);
 		return (1);
 	}
-	// info.fd = open_file(argv[1]);
-	// info.new_fd = create_file();
-	// info.exploit_size = (char *)&print_woody_end - (char *)&print_woody;
-	// info.exploit_size += (char *)&end_decipher - (char *)&decipher;
-	// printf("Exploit size : %lu\n", info.exploit_size);
-	// info = map_file(argv[1], info);
+	info.fd = open_file(argv[1]);
+	info.new_fd = create_file();
+	info.exploit_size = (char *)&print_woody_end - (char *)&print_woody;
+	info.exploit_size += (char *)&end_decipher - (char *)&decipher;
+	info.keystream = keystream;
+	printf("Exploit size : %lu\n", info.exploit_size);
+	info = map_file(argv[1], info);
 
-	// detect_file_arch(info.file);
-	// // section_d_assaut(info);
-	// parse_pheader(info);
+	detect_file_arch(info.file);
+	// section_d_assaut(info);
+	parse_pheader(info);
 	
 	
 	// tab = init("ABCDEFGHIJKMLNOP");
 	// keystream = generate_keystream(tab);
 	// cipher_rc4(input, keystream);
 
-	write(1, "\nTo Crypt :\n", 12);
-	write(1, input, len);
-	keystream = cipher(input, "ABCDEFGHIJKMLNOP", len, keystream);
-	// write(1, "\n\nCrypt\n", 9);
+	// write(1, "\nTo Crypt :\n", 12);
 	// write(1, input, len);
-	input = decipher(input, "ABCDEFGHIJKMLNOP", len);
-	write(1, "\n\nDecrypt\n", 11);
-	write(1, input, len);
+	// keystream = cipher(input, "ABCDEFGHIJKMLNOP", len, keystream);
+	// // write(1, "\n\nCrypt\n", 9);
+	// // write(1, input, len);
+	// input = decipher(input, "ABCDEFGHIJKMLNOP", len);
+	// write(1, "\n\nDecrypt\n", 11);
+	// write(1, input, len);
 
 	// write(1, "\nKeystream\n", 12);
 	// write(1, keystream, 255);
