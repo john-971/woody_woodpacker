@@ -1,15 +1,11 @@
-DONE :
-
-fonctionne si le programme trouve une cave dans le segment text
-gere la taille du payload dynamiquement et recalcul le bon offset pour l'ancien entry_point
-
 TODO :
 
--chiffrement
--compression
--D'autres méthodes si on ne trouve pas de caves assez grandes
-
+- D'autres méthodes si on ne trouve pas de caves assez grandes
+- Generer une clée de chiffrement 
+- Prendre une clée de chiffrement en parametre
+- Linkage de la libft
+- Nettoyage
 
 NICE TO HAVE :
 - un dépacker ?
-- prendre une clef de chiffrement en parametre
+- Compression

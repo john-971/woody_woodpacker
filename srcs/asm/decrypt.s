@@ -56,6 +56,6 @@ decipher:
 	; pop	rbp
 	; ret
 
-input_diff:	dd 0x43
-woody_diff: dd 0x5a
+input_diff:	dd 0x43	; C
+woody_diff: dd 0x5a	; Z
 end_decipher:

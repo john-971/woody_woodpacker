@@ -97,20 +97,18 @@ uint32_t	align(uint32_t offset)
 	return (0);
 }
 
-// uint8_t		patern_chr(void *tosearch, char *tofind, int len)
-// {
-// 	int 	i;
-// 	void 	*start_payload;
-// 	int		tofind_len;
-
-// 	i = 0;
-// 	tofind_len = strlen(tofind);
-// 	start_payload = memchr(tosearch, tofind[i], len);
-// 	while (i < tofind_len)
-// 	{
-
-// 	}
-// }
+void	fill_asm_var(void *ptr, char tofind, uint32_t len, int value_tofill)
+{
+	int *match;
+	
+	match = memchr(ptr, tofind, len);
+	if (match == NULL)
+	{
+		printf("Error in fill asm variable %c, we exit", tofind);
+		exit(EXIT_FAILURE);
+	}
+	*match = value_tofill;
+}
 
 void	parse_pheader(t_info info)
 {
@@ -118,9 +116,7 @@ void	parse_pheader(t_info info)
 	Elf64_Phdr	*pheader;
 	int			i = -1;
 	uint32_t	cave_size;
-	uint32_t	old_entry;
 	uint32_t	new_entry;
-	int 		entry_diff;
 	uint32_t	woody_size = ((char *)&print_woody_end - (char *)&print_woody);
 	uint32_t	decipher_size = (char *)&end_decipher - (char *)&decipher;
 	
@@ -137,80 +133,50 @@ void	parse_pheader(t_info info)
 			if (i + 1 < header->e_phnum)
 			{
 				cave_size = pheader[i + 1].p_vaddr - (pheader[i].p_vaddr + pheader[i].p_filesz);
+				printf("Taille de la cave : %x (%d)\n", cave_size, cave_size);
 				if (cave_size > info.exploit_size)
 				{
 
 					pheader[i].p_flags = (PF_R + PF_X + PF_W);
-
-					debug("Found cave with enough space:");	
-					printf("%u\n", cave_size);
 					new_entry = pheader[i].p_vaddr + pheader[i].p_memsz;
 					new_entry += align(new_entry);
-					printf("New Entry Aligned %x\n", new_entry);
 
-					old_entry = header->e_entry;
-
-					pheader[i].p_memsz += info.exploit_size + align(woody_size) ; //il manque la taille de la keystream exploit size + alignement
+					pheader[i].p_memsz += info.exploit_size + align(woody_size); //exploit size + alignement + keystream
 					pheader[i].p_filesz += info.exploit_size + align(woody_size);
-					printf("Total sze of section text : %x\n", pheader[i].p_memsz);
-					entry_diff = new_entry - old_entry;
+					
+					printf("Total size of segment text : %x\n", pheader[i].p_memsz);
+
 					printf("WOODY OFFSET : %x\n", new_entry);
 					memcpy(info.file + new_entry, (void *)&print_woody, woody_size);
 					
-					int *test = memchr(info.file + new_entry, 'A', woody_size);
-					// printf("%x\n %x\n %d\n", *test, (void *)&diff, entry_diff);
-					*test = entry_diff;
-
+					fill_asm_var(info.file + new_entry, 'A', woody_size, new_entry - header->e_entry);
 					cipher((void *)info.file + pheader[i].p_vaddr, "ABCDEFGHIJKMLNOP", pheader[i].p_memsz, info.keystream);
 					
 					new_entry += woody_size;
 					new_entry += align(new_entry);
-					printf("Decipher offset : %x\n", new_entry);
+					printf("Final Entry point (decipher) : %x\n", new_entry);
 					memcpy(info.file + new_entry, (void *)&decipher, decipher_size);
-
-					uint32_t input_diff = new_entry - pheader[i].p_vaddr;
-					printf("INPUT DIFF : %x\n", input_diff);
-					
-
 					memcpy(info.file + new_entry + decipher_size, info.keystream, 256);
 
-				//48 83 ec 08 48 8b 05 dd
-				//0x55555555a1e0
-				//48 83 ec 08 48	0x8b	0x05	0xdd
-
-
-				// A PRIORIS LE PRINT_WOODY REDIRIGE PAS AU BON ENDROIT
-
-
+					printf("Exploit size : %x (%d)\n", info.exploit_size + 255, info.exploit_size + 255);
 					header->e_entry = new_entry;
-					test = memchr(info.file + new_entry, 'C', decipher_size);
-					if(test == NULL)
-					{
-						printf("!!!!!!!!!!!!!!!!!ERROR IN FIND\n");
-						exit(EXIT_FAILURE);
-					} 
-
-					*test = input_diff;
-
-					input_diff = woody_size + align(new_entry) + align(woody_size);
-					test = memchr(info.file + new_entry, 'Z', decipher_size);
-					if(test == NULL)
-					{
-						printf("ERROR IN FIND\n");
-						exit(EXIT_FAILURE);
-					} 
-
-					*test = input_diff;
-					// printf("keystream : %s\n", keystream);
+					
+					fill_asm_var(info.file + new_entry, 'C', decipher_size, new_entry - pheader[i].p_vaddr);
+					fill_asm_var(info.file + new_entry, 'Z', decipher_size, woody_size + align(new_entry) + align(woody_size));
+					
 					write(info.new_fd, info.file, info.file_size);
 				}
-				
+				else
+				{
+					printf("Pas assez de place\n");
+				}
+			}
+			else
+			{
+				printf("Dernier block\n");
 			}
 			
 		}
-		// printf("%d\n", pheader[i].p_type);
-
-		// section = (Elf64_Shdr *)((uint8_t *)info.file + pheader.p_offset);
 	}
 	
 }
@@ -222,13 +188,14 @@ int 	main(int argc, char **argv)
 	u_char *input;
 	char *keystream = malloc(sizeof(char) * 256);
 	keystream = memset(keystream, 0, 256);
+	memset(&info, 0, sizeof(info));
 	if (keystream == NULL)
 	{
 		exit(EXIT_FAILURE);
 	}
 	int len;
 
-  	input = strdup("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas in eleifend enim. Nulla maximus, eros ac suscipit iaculis, justo turpis fringilla est, sed finibus orci velit nec sem. Cras quis nulla purus. Maecenas ante nisi, congue non nibh eget, gravida imperdiet lorem. Donec tellus ipsum, rutrum a metus non, laoreet molestie ligula. Fusce commodo finibus lorem, sit amet venenatis augue lobortis ac. Morbi auctor velit non magna condimentum, ac aliquam elit porttitor. Suspendisse nec elementum purus. Aliquam rhoncus tempus tempus. Phasellus nec dapibus ipsum. Morbi ornare augue quis dolor tempor finibus. Donec a scelerisque ante. Integer eget quam augue. Morbi at nunc fringilla, aliquam neque eget, elementum lectus. Proin dolor ipsum, pretium a gravida et, vehicula at lorem. Pellentesque vitae magna faucibus sem mattis consequat.Morbi dapibus laoreet nisl vitae sollicitudin. Suspendisse pharetra quis lorem faucibus vulputate. Etiam ac pulvinar nibh. Curabitur et nisi odio. Pellentesque ut felis sagittis, auctor ante at, commodo nisl. Ut dictum faucibus turpis sit amet eleifend. Cras ultrices purus nec dui tincidunt, at fringilla nunc facilisis. Fusce lobortis molestie iaculis. Nam volutpat justo quis diam ullamcorper rhoncus. Pellentesque et libero cursus nisi blandit mollis nec ac sapien. Aliquam elit justo, consectetur vulputate ante ut, mollis posuere velit. Nam id faucibus tellus. Proin augue leo, consectetur ac malesuada id, posuere non mauris. In scelerisque imperdiet nisl, consequat tristique sapien malesuada in. Suspendisse hendrerit imperdiet augue, quis semper diam auctor at.Ut ultricies neque massa, nec congue mi finibus quis. Maecenas a augue convallis, varius mi vitae, gravida lacus. Ut aliquam, erat ut accumsan efficitur, risus augue euismod metus, sed consectetur ante mi ac magna. Phasellus cursus, libero id sollicitudin suscipit, sapien risus tempus enim, nec sagittis tortor velit eu magna. Quisque cursus rutrum sem, pulvinar ultricies enim scelerisque eget. Nulla massa ante, viverra a odio sit amet, hendrerit tincidunt sapien. Aenean accumsan eget magna eu faucibus. Fusce in aliquam ex, et dignissim nisl. Nulla auctor eget neque non fringilla. Maecenas finibus aliquet porta. Donec molestie scelerisque sodales. Suspendisse potenti. Phasellus et tortor porta, mattis magna sed, pulvinar lorem. Ut ullamcorper ipsum a sapien pretium rutrum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et mattis orci.Ut gravida urna felis, id blandit nulla fermentum convallis. Praesent iaculis dolor et nisi aliquam vulputate. Phasellus ultricies tempor mauris, at tempor dolor dapibus sed. Integer ultrices erat quis leo blandit venenatis. Mauris lorem dolor, consequat et tellus sed, ultrices aliquet sem. Mauris sed ex id est elementum volutpat eu sed ex. Sed malesuada vel risus eu interdum. Etiam sit amet tellus et orci aliquam laoreet. Donec at tempor leo. Quisque dui ligula, pretium aliquam sollicitudin vel, placerat ut est. Sed tristique eros eu fermentum fermentum. Nulla et mi pharetra, porta elit in, condimentum diam. Nulla commodo justo eget egestas laoreet. Sed tempor, ipsum sed porttitor vulputate, neque urna commodo elit, non ultrices nisi tellus eget sapien. Sed auctor sagittis nisl sit amet elementum.Morbi mattis pulvinar erat, sed imperdiet tellus iaculis quis. Sed non efficitur odio, et luctus purus. Cras vehicula quam id lacinia malesuada. Aenean sed lorem ac mi suscipit posuere eget vitae justo. Nullam facilisis porta metus, a porttitor nisl finibus ac. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi varius augue quis rutrum ornare. Morbi blandit egestas varius. Proin tempus commodo elit ac imperdiet. In hac habitasse platea dictumst. Ut non velit orci.Suspendisse blandit, metus a pharetra consequat, nibh augue porta risus, id elementum lorem ipsum sed nisi. Suspendisse gravida tempor malesuada. Nullam imperdiet faucibus eros et rutrum. Duis in turpis aliquam magna suscipit tincidunt sit amet sed turpis. Aliquam nec libero sed neque ornare fringilla sit amet non metus. Nam vitae cursus libero, ac malesuada felis. Suspendisse egestas neque libero, eget suscipit lorem rutrum vitae. Duis aliquam, dolor eu finibus mollis, nibh odio mattis purus, in interdum purus nunc vel justo.Etiam imperdiet augue risus, eget aliquam neque sollicitudin eu. Cras vitae sem mattis, feugiat diam eu, ultrices urna. Morbi eget leo purus. Integer consectetur facilisis magna et varius. Vivamus placerat nunc in volutpat ultrices. Aenean varius eget augue id condimentum. Curabitur ipsum ante, vehicula ut rutrum et, fringilla eu dolor. Nam feugiat, nisl eget ultricies tincidunt, massa ante finibus dolor, eget euismod eros ante vel sapien. Vivamus neque risus, ullamcorper ac tincidunt scelerisque, venenatis lacinia neque. Nunc fermentum turpis non libero malesuada, eu sagittis magna facilisis. Morbi blandit laoreet tristique. Aliquam eleifend tortor eu vehicula porttitor. Praesent lectus sapien, auctor ac ullamcorper a, ultrices et leo. Phasellus gravida odio a facilisis mattis. In congue, mi at porttitor finibus, neque velit dignissim elit, eu rutrum orci dolor sit amet tellus.Fusce pretium, orci at dictum varius, arcu lorem mollis sem, ut molestie tortor felis eget neque. Ut vitae ante molestie, venenatis eros in, semper purus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Phasellus ac sem ac ligula lacinia pharetra. Pellentesque ultrices augue vitae turpis tempor, et venenatis enim egestas. Nulla tincidunt semper dolor, sed feugiat mauris congue et. Mauris blandit euismod condimentum. Mauris fringilla ac sem sed fermentum. Mauris consequat metus non efficitur imperdiet.Aenean egestas ex ut lorem pharetra consequat. Vestibulum in ligula sit amet lacus eleifend dictum. Nullam in eleifend metus. Proin bibendum euismod accumsan. Proin vel arcu accumsan, consectetur felis sit amet, malesuada tortor. Mauris lacinia egestas massa. Proin ut egestas est. Vestibulum ut neque lorem. Cras quis ante eget nisi aliquet lacinia.In in aliquam tortor, in malesuada dolor. Suspendisse turpis orci, vulputate sed leo sit amet, euismod condimentum odio. Integer rutrum consectetur tristique. Mauris non rhoncus augue, a dapibus nunc. Vestibulum eu nibh rutrum justo porttitor dapibus. Integer eget sapien a nisi mollis hendrerit a sed purus. Praesent tincidunt facilisis erat, a feugiat erat congue quis. Sed sagittis diam et ornare convallis. Morbi id aliquet nisl. Aenean a ipsum ut augue dictum congue. Ut id ligula dictum, rhoncus eros in, fermentum turpis.Proin pharetra interdum tortor, ac pretium ante. Fusce volutpat nibh eu dui gravida fermentum. Donec placerat commodo purus sit amet cursus. Maecenas blandit mi vel orci imperdiet sodales. Quisque risus felis, ultrices nec bibendum et, cursus sit amet metus. Etiam ut mi at enim venenatis fermentum vel quis est. Integer dignissim condimentum feugiat. Nullam malesuada, nisi ac facilisis facilisis, neque nulla varius lectus, quis blandit elit sem et orci. Integer mi quam, tristique id dignissim eu, tincidunt sit amet sem. Nam ut mi tristique, rhoncus urna eget, finibus risus.Nullam consequat, eros eu mattis hendrerit, arcu ante malesuada sapien, a finibus libero massa et dui. Aliquam placerat congue urna, tempus dapibus justo facilisis et. Nullam ornare lacus in tortor aliquet, vitae sodales ante mollis. Donec commodo ex eros, at pulvinar lectus aliquam vel. Duis a pharetra mi. Suspendisse sagittis dolor lorem, eu sodales dolor hendrerit a. Vestibulum ac ligula volutpat, tempor metus et, rutrum arcu.Pellentesque vel erat vitae purus varius vulputate eget ut ex. Donec eleifend velit libero, quis porta ex lobortis ut. Vestibulum quis mollis augue, et tempus ligula. Phasellus varius ultrices purus viverra consectetur. Pellentesque vitae lectus sit amet velit pretium euismod. Cras euismod a nisi nec vehicula. Ut euismod magna nisl, non elementum tortor faucibus eu. Etiam sed. ");
+  	// input = strdup("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas in eleifend enim. Nulla maximus, eros ac suscipit iaculis, justo turpis fringilla est, sed finibus orci velit nec sem. Cras quis nulla purus. Maecenas ante nisi, congue non nibh eget, gravida imperdiet lorem. Donec tellus ipsum, rutrum a metus non, laoreet molestie ligula. Fusce commodo finibus lorem, sit amet venenatis augue lobortis ac. Morbi auctor velit non magna condimentum, ac aliquam elit porttitor. Suspendisse nec elementum purus. Aliquam rhoncus tempus tempus. Phasellus nec dapibus ipsum. Morbi ornare augue quis dolor tempor finibus. Donec a scelerisque ante. Integer eget quam augue. Morbi at nunc fringilla, aliquam neque eget, elementum lectus. Proin dolor ipsum, pretium a gravida et, vehicula at lorem. Pellentesque vitae magna faucibus sem mattis consequat.Morbi dapibus laoreet nisl vitae sollicitudin. Suspendisse pharetra quis lorem faucibus vulputate. Etiam ac pulvinar nibh. Curabitur et nisi odio. Pellentesque ut felis sagittis, auctor ante at, commodo nisl. Ut dictum faucibus turpis sit amet eleifend. Cras ultrices purus nec dui tincidunt, at fringilla nunc facilisis. Fusce lobortis molestie iaculis. Nam volutpat justo quis diam ullamcorper rhoncus. Pellentesque et libero cursus nisi blandit mollis nec ac sapien. Aliquam elit justo, consectetur vulputate ante ut, mollis posuere velit. Nam id faucibus tellus. Proin augue leo, consectetur ac malesuada id, posuere non mauris. In scelerisque imperdiet nisl, consequat tristique sapien malesuada in. Suspendisse hendrerit imperdiet augue, quis semper diam auctor at.Ut ultricies neque massa, nec congue mi finibus quis. Maecenas a augue convallis, varius mi vitae, gravida lacus. Ut aliquam, erat ut accumsan efficitur, risus augue euismod metus, sed consectetur ante mi ac magna. Phasellus cursus, libero id sollicitudin suscipit, sapien risus tempus enim, nec sagittis tortor velit eu magna. Quisque cursus rutrum sem, pulvinar ultricies enim scelerisque eget. Nulla massa ante, viverra a odio sit amet, hendrerit tincidunt sapien. Aenean accumsan eget magna eu faucibus. Fusce in aliquam ex, et dignissim nisl. Nulla auctor eget neque non fringilla. Maecenas finibus aliquet porta. Donec molestie scelerisque sodales. Suspendisse potenti. Phasellus et tortor porta, mattis magna sed, pulvinar lorem. Ut ullamcorper ipsum a sapien pretium rutrum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et mattis orci.Ut gravida urna felis, id blandit nulla fermentum convallis. Praesent iaculis dolor et nisi aliquam vulputate. Phasellus ultricies tempor mauris, at tempor dolor dapibus sed. Integer ultrices erat quis leo blandit venenatis. Mauris lorem dolor, consequat et tellus sed, ultrices aliquet sem. Mauris sed ex id est elementum volutpat eu sed ex. Sed malesuada vel risus eu interdum. Etiam sit amet tellus et orci aliquam laoreet. Donec at tempor leo. Quisque dui ligula, pretium aliquam sollicitudin vel, placerat ut est. Sed tristique eros eu fermentum fermentum. Nulla et mi pharetra, porta elit in, condimentum diam. Nulla commodo justo eget egestas laoreet. Sed tempor, ipsum sed porttitor vulputate, neque urna commodo elit, non ultrices nisi tellus eget sapien. Sed auctor sagittis nisl sit amet elementum.Morbi mattis pulvinar erat, sed imperdiet tellus iaculis quis. Sed non efficitur odio, et luctus purus. Cras vehicula quam id lacinia malesuada. Aenean sed lorem ac mi suscipit posuere eget vitae justo. Nullam facilisis porta metus, a porttitor nisl finibus ac. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi varius augue quis rutrum ornare. Morbi blandit egestas varius. Proin tempus commodo elit ac imperdiet. In hac habitasse platea dictumst. Ut non velit orci.Suspendisse blandit, metus a pharetra consequat, nibh augue porta risus, id elementum lorem ipsum sed nisi. Suspendisse gravida tempor malesuada. Nullam imperdiet faucibus eros et rutrum. Duis in turpis aliquam magna suscipit tincidunt sit amet sed turpis. Aliquam nec libero sed neque ornare fringilla sit amet non metus. Nam vitae cursus libero, ac malesuada felis. Suspendisse egestas neque libero, eget suscipit lorem rutrum vitae. Duis aliquam, dolor eu finibus mollis, nibh odio mattis purus, in interdum purus nunc vel justo.Etiam imperdiet augue risus, eget aliquam neque sollicitudin eu. Cras vitae sem mattis, feugiat diam eu, ultrices urna. Morbi eget leo purus. Integer consectetur facilisis magna et varius. Vivamus placerat nunc in volutpat ultrices. Aenean varius eget augue id condimentum. Curabitur ipsum ante, vehicula ut rutrum et, fringilla eu dolor. Nam feugiat, nisl eget ultricies tincidunt, massa ante finibus dolor, eget euismod eros ante vel sapien. Vivamus neque risus, ullamcorper ac tincidunt scelerisque, venenatis lacinia neque. Nunc fermentum turpis non libero malesuada, eu sagittis magna facilisis. Morbi blandit laoreet tristique. Aliquam eleifend tortor eu vehicula porttitor. Praesent lectus sapien, auctor ac ullamcorper a, ultrices et leo. Phasellus gravida odio a facilisis mattis. In congue, mi at porttitor finibus, neque velit dignissim elit, eu rutrum orci dolor sit amet tellus.Fusce pretium, orci at dictum varius, arcu lorem mollis sem, ut molestie tortor felis eget neque. Ut vitae ante molestie, venenatis eros in, semper purus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Phasellus ac sem ac ligula lacinia pharetra. Pellentesque ultrices augue vitae turpis tempor, et venenatis enim egestas. Nulla tincidunt semper dolor, sed feugiat mauris congue et. Mauris blandit euismod condimentum. Mauris fringilla ac sem sed fermentum. Mauris consequat metus non efficitur imperdiet.Aenean egestas ex ut lorem pharetra consequat. Vestibulum in ligula sit amet lacus eleifend dictum. Nullam in eleifend metus. Proin bibendum euismod accumsan. Proin vel arcu accumsan, consectetur felis sit amet, malesuada tortor. Mauris lacinia egestas massa. Proin ut egestas est. Vestibulum ut neque lorem. Cras quis ante eget nisi aliquet lacinia.In in aliquam tortor, in malesuada dolor. Suspendisse turpis orci, vulputate sed leo sit amet, euismod condimentum odio. Integer rutrum consectetur tristique. Mauris non rhoncus augue, a dapibus nunc. Vestibulum eu nibh rutrum justo porttitor dapibus. Integer eget sapien a nisi mollis hendrerit a sed purus. Praesent tincidunt facilisis erat, a feugiat erat congue quis. Sed sagittis diam et ornare convallis. Morbi id aliquet nisl. Aenean a ipsum ut augue dictum congue. Ut id ligula dictum, rhoncus eros in, fermentum turpis.Proin pharetra interdum tortor, ac pretium ante. Fusce volutpat nibh eu dui gravida fermentum. Donec placerat commodo purus sit amet cursus. Maecenas blandit mi vel orci imperdiet sodales. Quisque risus felis, ultrices nec bibendum et, cursus sit amet metus. Etiam ut mi at enim venenatis fermentum vel quis est. Integer dignissim condimentum feugiat. Nullam malesuada, nisi ac facilisis facilisis, neque nulla varius lectus, quis blandit elit sem et orci. Integer mi quam, tristique id dignissim eu, tincidunt sit amet sem. Nam ut mi tristique, rhoncus urna eget, finibus risus.Nullam consequat, eros eu mattis hendrerit, arcu ante malesuada sapien, a finibus libero massa et dui. Aliquam placerat congue urna, tempus dapibus justo facilisis et. Nullam ornare lacus in tortor aliquet, vitae sodales ante mollis. Donec commodo ex eros, at pulvinar lectus aliquam vel. Duis a pharetra mi. Suspendisse sagittis dolor lorem, eu sodales dolor hendrerit a. Vestibulum ac ligula volutpat, tempor metus et, rutrum arcu.Pellentesque vel erat vitae purus varius vulputate eget ut ex. Donec eleifend velit libero, quis porta ex lobortis ut. Vestibulum quis mollis augue, et tempus ligula. Phasellus varius ultrices purus viverra consectetur. Pellentesque vitae lectus sit amet velit pretium euismod. Cras euismod a nisi nec vehicula. Ut euismod magna nisl, non elementum tortor faucibus eu. Etiam sed. ");
 	// input = strdup("ABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMLNOPABCDEFGHIJKMAAAAAAAAAAAAAAbbbbbQQQQQ");
 	len = strlen(input);
 	if (argc < 2)
@@ -241,7 +208,7 @@ int 	main(int argc, char **argv)
 	info.exploit_size = (char *)&print_woody_end - (char *)&print_woody;
 	info.exploit_size += (char *)&end_decipher - (char *)&decipher;
 	info.keystream = keystream;
-	printf("Exploit size : %lu\n", info.exploit_size);
+	
 	info = map_file(argv[1], info);
 
 	detect_file_arch(info.file);
@@ -265,8 +232,8 @@ int 	main(int argc, char **argv)
 	// write(1, "\nKeystream\n", 12);
 	// write(1, keystream, 255);
 
-	// munmap(info.file, info.file_size);
-	// close(info.fd);
-	// close(info.new_fd);
+	munmap(info.file, info.file_size);
+	close(info.fd);
+	close(info.new_fd);
 	return (0);
 }
