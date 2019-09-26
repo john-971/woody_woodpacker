@@ -9,7 +9,7 @@ decipher:
 	push rbp
 	mov rbp, rsp
 	sub rsp, 16
-
+	; int 0xcc
 	mov DWORD [rsp], -1					; i = -1
 	lea rax, [rel decipher]
 	mov ecx, [rel input_diff]
@@ -17,7 +17,7 @@ decipher:
 	mov QWORD [rsp + 8], rax			; save input pointer
 
 	mov eax, DWORD [rsp]				; i
-	mov ecx, DWORD [rel input_len]		; input_len
+	mov ecx, DWORD [rel input_diff]		; input_len
 	cmp eax, ecx
 	jge .exit
 	add eax, 1
@@ -35,13 +35,27 @@ decipher:
 	mov rsi, [rsp + 8]					; input[i] ^ keystream[i & 255]
 	mov BYTE [rsi + rax], cl			; input[i] ^= keystream[i & 255]
 	jmp decipher + 15
+	; jmp decipher + 17 ; + breakpoint
 
 .exit:
-	mov rax, QWORD [rsp]
+
+	xor edi, edi
+	xor rsi, rsi
+	xor rdx, rdx
+	lea rax, [rel decipher]
+	mov edx, [rel woody_diff]
+	sub rax, rdx
+	xor rdx, rdx
+	xor rcx, rcx
 	mov	rsp, rbp
 	pop	rbp
-	ret
+
+	jmp rax
+	; mov rax, QWORD [rsp]
+	; mov	rsp, rbp
+	; pop	rbp
+	; ret
 
 input_diff:	dd 0x43
-input_len: 	dd 0x44444444
+woody_diff: dd 0x5a
 end_decipher:

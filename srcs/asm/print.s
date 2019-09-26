@@ -20,6 +20,7 @@ print_woody:
   mov edx, [rel diff]
   sub rax, rdx
   xor rdx, rdx
+  xor rcx, rcx
   jmp rax
 
 diff: dd 0x41414141

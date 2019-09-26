@@ -97,6 +97,21 @@ uint32_t	align(uint32_t offset)
 	return (0);
 }
 
+// uint8_t		patern_chr(void *tosearch, char *tofind, int len)
+// {
+// 	int 	i;
+// 	void 	*start_payload;
+// 	int		tofind_len;
+
+// 	i = 0;
+// 	tofind_len = strlen(tofind);
+// 	start_payload = memchr(tosearch, tofind[i], len);
+// 	while (i < tofind_len)
+// 	{
+
+// 	}
+// }
+
 void	parse_pheader(t_info info)
 {
 	Elf64_Ehdr 	*header;
@@ -124,6 +139,9 @@ void	parse_pheader(t_info info)
 				cave_size = pheader[i + 1].p_vaddr - (pheader[i].p_vaddr + pheader[i].p_filesz);
 				if (cave_size > info.exploit_size)
 				{
+
+					pheader[i].p_flags = (PF_R + PF_X + PF_W);
+
 					debug("Found cave with enough space:");	
 					printf("%u\n", cave_size);
 					new_entry = pheader[i].p_vaddr + pheader[i].p_memsz;
@@ -131,14 +149,12 @@ void	parse_pheader(t_info info)
 					printf("New Entry Aligned %x\n", new_entry);
 
 					old_entry = header->e_entry;
-					// header->e_entry = new_entry;
 
-					//T'es sure ???
-					//JSAIS PAS GROS
-					pheader[i].p_memsz += info.exploit_size + align(woody_size) ; //exploit size + alignement
+					pheader[i].p_memsz += info.exploit_size + align(woody_size) ; //il manque la taille de la keystream exploit size + alignement
 					pheader[i].p_filesz += info.exploit_size + align(woody_size);
 					printf("Total sze of section text : %x\n", pheader[i].p_memsz);
 					entry_diff = new_entry - old_entry;
+					printf("WOODY OFFSET : %x\n", new_entry);
 					memcpy(info.file + new_entry, (void *)&print_woody, woody_size);
 					
 					int *test = memchr(info.file + new_entry, 'A', woody_size);
@@ -151,15 +167,40 @@ void	parse_pheader(t_info info)
 					new_entry += align(new_entry);
 					printf("Decipher offset : %x\n", new_entry);
 					memcpy(info.file + new_entry, (void *)&decipher, decipher_size);
+
+					uint32_t input_diff = new_entry - pheader[i].p_vaddr;
+					printf("INPUT DIFF : %x\n", input_diff);
 					
 
-					memcpy(info.file + new_entry + decipher_size, info.keystream, 255);
+					memcpy(info.file + new_entry + decipher_size, info.keystream, 256);
 
-				
+				//48 83 ec 08 48 8b 05 dd
+				//0x55555555a1e0
+				//48 83 ec 08 48	0x8b	0x05	0xdd
+
+
+				// A PRIORIS LE PRINT_WOODY REDIRIGE PAS AU BON ENDROIT
+
 
 					header->e_entry = new_entry;
-					// *test = memchr(info.file + new_entry, 'C', info.exploit_size);
-					// *test = 
+					test = memchr(info.file + new_entry, 'C', decipher_size);
+					if(test == NULL)
+					{
+						printf("!!!!!!!!!!!!!!!!!ERROR IN FIND\n");
+						exit(EXIT_FAILURE);
+					} 
+
+					*test = input_diff;
+
+					input_diff = woody_size + align(new_entry) + align(woody_size);
+					test = memchr(info.file + new_entry, 'Z', decipher_size);
+					if(test == NULL)
+					{
+						printf("ERROR IN FIND\n");
+						exit(EXIT_FAILURE);
+					} 
+
+					*test = input_diff;
 					// printf("keystream : %s\n", keystream);
 					write(info.new_fd, info.file, info.file_size);
 				}
@@ -179,7 +220,8 @@ int 	main(int argc, char **argv)
 	t_info info;
 	u_char	*tab;
 	u_char *input;
-	char *keystream = malloc(sizeof(char) * 255);
+	char *keystream = malloc(sizeof(char) * 256);
+	keystream = memset(keystream, 0, 256);
 	if (keystream == NULL)
 	{
 		exit(EXIT_FAILURE);
