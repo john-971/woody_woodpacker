@@ -28,7 +28,7 @@ SOURCES_ASM = 	./srcs/asm/print.s\
 SOURCES = 		./srcs/main.c \
 				./srcs/debug.c \
 				./srcs/file_tools.c \
-				./srcs/rc4.c
+				./srcs/packer.c
 
 OBJ = $(SOURCES:.c=.o) $(SOURCES_ASM:.s=.o)
 

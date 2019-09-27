@@ -4,7 +4,7 @@ int		open_file(char *name)
 {
 	int fd;
 
-	fd = open(name, O_RDWR);
+	fd = open(name, O_RDONLY);
 	if (fd == -1)
 	{
 		fprintf(stderr, "%s : %s", strerror(errno), name);

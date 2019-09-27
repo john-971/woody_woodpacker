@@ -4,8 +4,15 @@ TODO :
 - Generer une clée de chiffrement 
 - Prendre une clée de chiffrement en parametre
 - Linkage de la libft
+- Creer woody avec les mêmes droits que le parametre
 - Nettoyage
 
 NICE TO HAVE :
 - un dépacker ?
 - Compression
+
+
+
+commande pour tester tous les binaires :
+
+find /bin/ -type f -exec bash -c 'echo {}; ./woody_woodpacker {}' \; 2>test

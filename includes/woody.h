@@ -53,6 +53,11 @@ t_info		map_file(char *file_name, t_info info);
 
 
 /*
+*	Packer.c
+*/
+void	parse_pheader(t_info info);
+
+/*
 *	rc4.c
 */
 u_char	*init(u_char *key);
