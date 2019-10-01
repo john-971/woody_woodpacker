@@ -43,7 +43,7 @@ decipher:
 	xor rsi, rsi
 	xor rdx, rdx
 	lea rax, [rel decipher]
-	mov edx, [rel woody_diff]
+	movsxd rdx, [rel woody_diff]
 	sub rax, rdx
 	xor rdx, rdx
 	xor rcx, rcx

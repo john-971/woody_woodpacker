@@ -7,13 +7,14 @@ global diff
 
 
 print_woody:
+;   int 0xcc
   mov eax, 1        ; write(
   mov edi, 1        ;   STDOUT_FILENO,
   lea rsi, [rel msg]      ;   "Hello, world!\n",
   mov rdx, 14   	;   sizeof("Hello, world!\n")
   syscall           ; );
 
-  xor edi, edi
+  xor rdi, rdi
   xor rsi, rsi
   xor rdx, rdx
   lea rax, [rel print_woody]
