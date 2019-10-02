@@ -28,7 +28,7 @@ int	detect_file_arch(void *file)
 
 }
 
-void	section_d_assaut(t_info info)
+Elf64_Shdr	*section_d_assaut(t_info info, Elf64_Addr addr)
 {
 	Elf64_Ehdr 	*header;
 	Elf64_Shdr  *section;
@@ -44,48 +44,19 @@ void	section_d_assaut(t_info info)
 
 	while (i++ < header->e_shnum - 1)
 	{
-		printf("Section: [%i] %s\n", i, (char *)((uint8_t *)info.file + (str_tab->sh_offset + section[i].sh_name)));
+		
 		if (&section[i + 1])
 		{
-			if (section[i].sh_flags & SHF_EXECINSTR)
+			if (section[i].sh_addr <= addr && section[i + 1].sh_addr > addr)
 			{
-				// printf("Exec : true\n");
-				if (((section[i + 1].sh_addr - section[i].sh_addr) - section[i].sh_size) > 3000)
-				{
-					((Elf64_Ehdr *)info.file)->e_entry = section[i].sh_addr + section[i].sh_size + 3;
-					// header->e_entry = section[i].sh_addr + section[i].sh_size + ALIGN;
-					
-					
-					// memcpy(info.file, header, sizeof(Elf64_Ehdr));
-
-					printf( "%lx\n", ((Elf64_Ehdr *)info.file)->e_entry);
-					printf( "%lx\n", header->e_entry);
-
-					//SIZE OF SECTION
-
-					// section[i].sh_size = section[i].sh_size + 50;
-
-					// char *payload[500];
-					// memset(payload, 0, 500);
-					// read(fd_payload, info.file + (section[i].sh_addr + section[i].sh_size ), 500);
-
-
-					// write(info.new_fd, info.file, info.file_size);
-
-
-
-				
-					// printf( "%ld\n", syscall(SYS_msync, info.file, info.size, MS_SYNC | MS_INVALIDATE));
-					// fprintf(stderr, "%s \n", strerror(errno));
-				}
+				printf("We try section: [%i] %s\n", i, (char *)((uint8_t *)info.file + (str_tab->sh_offset + section[i].sh_name)));
+				return (&section[i]);
 			}
-			// printf("cave size : %ld\n", (section[i + 1].sh_addr - section[i].sh_addr) - section[i].sh_size);
-		}
-		else
-		{
-			printf("\n");
 		}
 	}
+	printf("WTF ? section not found, we exit");
+	exit(EXIT_FAILURE);
+	return (NULL);
 }
 
 
@@ -95,6 +66,7 @@ int 	main(int argc, char **argv)
 	t_info info;
 	u_char	*tab;
 	u_char *input;
+	Elf64_Phdr *pheader;
 	char *keystream = malloc(sizeof(char) * 256);
 	keystream = memset(keystream, 0, 256);
 	memset(&info, 0, sizeof(info));
@@ -119,10 +91,26 @@ int 	main(int argc, char **argv)
 	info.keystream = keystream;
 	
 	info = map_file(argv[1], info);
-
 	detect_file_arch(info.file);
-	// section_d_assaut(info);
-	parse_pheader(info);
+
+	// On essaie le segment text
+	pheader = search_segment(info, PF_R + PF_X);
+	if (pheader != NULL)
+	{
+		debug("We are in segment text\n");
+		parse_pheader(info, pheader);
+		return (0);
+	}
+	debug("Trying another place\n");
+	pheader = search_segment(info, 0);
+	if (pheader != NULL)
+	{
+		debug("We are NOT in segment text\n");
+		parse_pheader(info, pheader);
+		return (0);
+	}
+	debug("Can't pack");
+	
 	
 	
 	// tab = init("ABCDEFGHIJKMLNOP");

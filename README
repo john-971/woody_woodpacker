@@ -1,6 +1,6 @@
 TODO :
 
-- D'autres méthodes si on ne trouve pas de caves assez grandes
+- NE FONCTIONNE PAS SI ON PACK AVANT exemple : top, rm
 - Generer une clée de chiffrement 
 - Prendre une clée de chiffrement en parametre
 - Linkage de la libft

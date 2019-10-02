@@ -18,7 +18,7 @@ print_woody:
   xor rsi, rsi
   xor rdx, rdx
   lea rax, [rel print_woody]
-  mov edx, [rel diff]
+  movsxd rdx, [rel diff]
   sub rax, rdx
   xor rdx, rdx
   xor rcx, rcx
