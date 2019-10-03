@@ -56,7 +56,7 @@ t_info		map_file(char *file_name, t_info info);
 *	Packer.c
 */
 Elf64_Phdr	*parse_pheader(t_info info, Elf64_Phdr *pheader);
-Elf64_Phdr	*search_segment(t_info info, uint32_t perm);
+Elf64_Phdr	*search_segment(t_info info, uint32_t perm, uint8_t check_size);
 
 /*
 *	Main.c

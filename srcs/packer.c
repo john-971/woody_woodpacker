@@ -19,10 +19,11 @@ void	fill_asm_var(void *ptr, char tofind, uint32_t len, int value_tofill)
 		printf("Error in fill asm variable %c, we exit", tofind);
 		exit(EXIT_FAILURE);
 	}
+	printf("Find %c | in %x\n", tofind, *match);
 	*match = value_tofill;
 }
 
-Elf64_Phdr	*search_segment(t_info info, uint32_t perm)
+Elf64_Phdr	*search_segment(t_info info, uint32_t perm, uint8_t check_size)
 {
 	Elf64_Ehdr 	*header;
 	Elf64_Phdr	*pheader;
@@ -39,19 +40,27 @@ Elf64_Phdr	*search_segment(t_info info, uint32_t perm)
 			{
 				if (perm == pheader[i].p_flags || perm == 0)
 				{
-					// printf("Found load segment with right perm => v_addr : %x\n", pheader[i].p_vaddr);
-					cave_size = pheader[i + 1].p_offset - (pheader[i].p_offset + pheader[i].p_filesz);
-					// printf("Taille de la cave : %x (%d)\n", cave_size, cave_size);
-					if ((int)cave_size > ((int)info.exploit_size + 256))
+					if (check_size == 1)
 					{
-						debug("Found segment with enough space\n");
-						printf("Taille de la cave : %x (%d)\n", cave_size, cave_size);
-						return (&pheader[i]);
+						// printf("Found load segment with right perm => v_addr : %x\n", pheader[i].p_vaddr);
+						cave_size = pheader[i + 1].p_offset - (pheader[i].p_offset + pheader[i].p_filesz);
+						// printf("Taille de la cave : %x (%d)\n", cave_size, cave_size);
+						if ((int)cave_size > ((int)info.exploit_size + 256))
+						{
+							debug("Found segment with enough space\n");
+							printf("Taille de la cave : %x (%d)\n", cave_size, cave_size);
+							return (&pheader[i]);
+						}
+						else
+						{
+							debug("Pas assez de place\n");
+						}
 					}
 					else
 					{
-						debug("Pas assez de place\n");
+						return (&pheader[i]);
 					}
+					
 				}
 			}
 			else
@@ -66,7 +75,7 @@ Elf64_Phdr	*search_segment(t_info info, uint32_t perm)
 Elf64_Phdr	*parse_pheader(t_info info, Elf64_Phdr *pheader)
 {
 	Elf64_Ehdr 	*header;
-	// Elf64_Phdr	*pheader;
+	Elf64_Phdr	*segment_txt;
 	uint32_t	cave_size;
 	uint32_t	new_entry;
 	uint32_t	woody_size = ((char *)&print_woody_end - (char *)&print_woody);
@@ -80,21 +89,17 @@ Elf64_Phdr	*parse_pheader(t_info info, Elf64_Phdr *pheader)
 
 	
 	header = (Elf64_Ehdr *)info.file;
-
-	//MANIP SUR LE FICHIER, POFFSET + FILESZ
-	//MANIP SUR LES ADDRESSES , P_VADDR + MEMSIZE
-	// if (pheader->p_flags != (PF_R + PF_X) && text_done == 0)
-	// {
-	// 	continue ;
-	// }
-	// text_done = 1;
-
-	
-
+	segment_txt = search_segment(info, PF_R + PF_X, 0);
+	if (segment_txt == NULL)
+	{
+		debug("Wtf pas de segment executable ?, on exit");
+		exit(EXIT_FAILURE);
+	}
 	printf("Offset : %x\nVaddr : %x\nSize : %x\n", pheader->p_offset, pheader->p_vaddr, pheader->p_filesz);
 	printf("Section text %s\n", pheader->p_flags == (PF_R + PF_X) ? "oui\n": "non");
 
 	pheader->p_flags = (PF_R + PF_X + PF_W);
+	segment_txt->p_flags = (PF_R + PF_X + PF_W);
 	woody_offset = pheader->p_offset + pheader->p_filesz;
 	alignement = align(woody_offset);
 	int woody_align = alignement;
@@ -128,7 +133,7 @@ Elf64_Phdr	*parse_pheader(t_info info, Elf64_Phdr *pheader)
 	// fill_asm_var(info.file + decipher_offset, 'C', decipher_size, decipher_offset - header->e_entry);
 	printf("input diff : %x (%d)\n", (pheader->p_vaddr + pheader->p_memsz + alignement + woody_size) - header->e_entry, (pheader->p_vaddr + pheader->p_memsz + alignement + woody_size) - header->e_entry);
 	fill_asm_var(info.file + decipher_offset, 'C', decipher_size, (pheader->p_vaddr + pheader->p_memsz + alignement + woody_size) - header->e_entry);
-	fill_asm_var(info.file + decipher_offset, 'Y', decipher_size, section->sh_size - (header->e_entry - section->sh_addr));
+	fill_asm_var(info.file + decipher_offset, 0x90, decipher_size, section->sh_size - (header->e_entry - section->sh_addr));
 	fill_asm_var(info.file + decipher_offset, 'Z', decipher_size, decipher_offset - woody_offset);
 	
 	

@@ -9,7 +9,7 @@ decipher:
 	push rbp
 	mov rbp, rsp
 	sub rsp, 16
-	int 0xcc
+	; int 0xcc
 	mov DWORD [rsp], -1					; i = -1
 	lea rax, [rel decipher]
 	movsxd rdx, [rel input_diff]
@@ -34,8 +34,8 @@ decipher:
 	xor ecx, edx
 	mov rsi, [rsp + 8]					; input[i] ^ keystream[i & 255]
 	mov BYTE [rsi + rax], cl			; input[i] ^= keystream[i & 255]
-	; jmp decipher + 15
-	jmp decipher + 17 ; + breakpoint
+	jmp decipher + 15
+	; jmp decipher + 17 ; + breakpoint
 
 .exit:
 
@@ -57,6 +57,6 @@ decipher:
 	; ret
 
 input_diff:	dd 0x43	; C
-input_len: 	dd 0x59
+input_len: 	dd 0x90 ; Y
 woody_diff: dd 0x5a	; Z
 end_decipher:

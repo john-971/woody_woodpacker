@@ -94,7 +94,7 @@ int 	main(int argc, char **argv)
 	detect_file_arch(info.file);
 
 	// On essaie le segment text
-	pheader = search_segment(info, PF_R + PF_X);
+	pheader = search_segment(info, PF_R + PF_X, 1);
 	if (pheader != NULL)
 	{
 		debug("We are in segment text\n");
@@ -102,7 +102,7 @@ int 	main(int argc, char **argv)
 		return (0);
 	}
 	debug("Trying another place\n");
-	pheader = search_segment(info, 0);
+	pheader = search_segment(info, 0, 1);
 	if (pheader != NULL)
 	{
 		debug("We are NOT in segment text\n");
