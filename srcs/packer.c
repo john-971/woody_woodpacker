@@ -13,7 +13,7 @@ void	fill_asm_var(void *ptr, char tofind, uint32_t len, int value_tofill)
 {
 	int *match;
 	
-	match = memchr(ptr, tofind, len);
+	match = ft_memchr(ptr, tofind, len);
 	if (match == NULL)
 	{
 		printf("Error in fill asm variable %c, we exit", tofind);
@@ -109,7 +109,7 @@ Elf64_Phdr	*parse_pheader(t_info info, Elf64_Phdr *pheader)
 
 
 	printf("WOODY OFFSET : %x\nWOODY SIZE : %x\n", woody_offset, woody_size);
-	memcpy(info.file + woody_offset, (void *)&print_woody, woody_size);
+	ft_memcpy(info.file + woody_offset, (void *)&print_woody, woody_size);
 	
 	printf("OLD ENTRY : %x\n", header->e_entry);
 
@@ -126,8 +126,8 @@ Elf64_Phdr	*parse_pheader(t_info info, Elf64_Phdr *pheader)
 	alignement += align(decipher_offset);
 	decipher_offset += align(decipher_offset);
 	
-	memcpy(info.file + decipher_offset, (void *)&decipher, decipher_size);
-	memcpy(info.file + decipher_offset + decipher_size, info.keystream, 256);
+	ft_memcpy(info.file + decipher_offset, (void *)&decipher, decipher_size);
+	ft_memcpy(info.file + decipher_offset + decipher_size, info.keystream, 256);
 
 	// printf("Exploit size : %x (%d)\n", info.exploit_size + 255, info.exploit_size + 255);
 	// fill_asm_var(info.file + decipher_offset, 'C', decipher_size, decipher_offset - header->e_entry);

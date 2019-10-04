@@ -16,6 +16,12 @@ decipher:
 	sub rax, rdx						; get input pointer
 	mov QWORD [rsp + 8], rax			; save input pointer
 
+	; mov rax, 10							; syscall mprotect
+	; mov rcx, QWORD [rsp + 8]
+	; and rcx, 4095
+	 
+
+
 	mov eax, DWORD [rsp]				; i
 	mov ecx, DWORD [rel input_len]		; input_len
 	cmp eax, ecx

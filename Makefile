@@ -16,10 +16,9 @@ AS=nasm -f elf64
 
 NAME = woody_woodpacker
 
-PATH_INC = ./includes/
+LIBS = -L srcs/libft/ -lft -lm
 
-
-INCLUDES = -I $(PATH_INC)
+INCLUDES = -I ./includes/ -I srcs/libft/includes/
 
 SOURCES_ASM = 	./srcs/asm/print.s\
 				./srcs/asm/crypt.s\
@@ -32,22 +31,25 @@ SOURCES = 		./srcs/main.c \
 
 OBJ = $(SOURCES:.c=.o) $(SOURCES_ASM:.s=.o)
 
-.PHONY: clean fclean re
-
 all: $(NAME)
 
 $(NAME): $(OBJ)
-	$(CC) $(FLAGS) $(OBJ) -o $@
-	@echo "\033[36m◉ \033[33mmake is done\033[0m"
+	make -C srcs/libft/
+	$(CC) $(FLAGS) $(OBJ) -o $@ $(LIBS)
+	@echo "\033[36m◉ \033[33mmake woody_woodpacker is done\033[0m"
 
 
 clean:
-	rm -f $(OBJ)
-	@echo "\033[36m◉ \033[33mclean done\033[0m"
+	make clean -C srcs/libft/
+	@rm -f $(OBJ)
+	@echo "\033[36m◉ \033[33mclean woody_woodpacker done\033[0m"
 
 fclean: clean
-	rm -f $(NAME)
-	@echo "\033[36m◉ \033[33mfclean done\033[0m"
+	make fclean -C srcs/libft/
+	@rm -f $(NAME)
+	@echo "\033[36m◉ \033[33mfclean woody_woodpacker done\033[0m"
 
 
 re: fclean all
+
+.PHONY: clean fclean re

@@ -1,9 +1,7 @@
 TODO :
 
-- NE FONCTIONNE PAS SI ON PACK AVANT exemple : top, rm
 - Generer une clée de chiffrement 
 - Prendre une clée de chiffrement en parametre
-- Linkage de la libft
 - Creer woody avec les mêmes droits que le parametre
 - Nettoyage
 

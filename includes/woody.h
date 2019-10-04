@@ -1,3 +1,6 @@
+#ifndef WOODY_H
+# define WOODY_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -9,6 +12,7 @@
 #include <string.h>
 #include <elf.h>
 #include <sys/mman.h>
+#include "../srcs/libft/includes/libft.h"
 
 
 #define ALIGN 
@@ -69,3 +73,5 @@ Elf64_Shdr	*section_d_assaut(t_info info, Elf64_Addr addr);
 u_char	*init(u_char *key);
 u_char *generate_keystream(u_char *tab);
 void	cipher_rc4(u_char *input, u_char *keystream);
+
+#endif
