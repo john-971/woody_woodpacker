@@ -27,14 +27,6 @@ cipher:
 	mov edx, eax
 	cdqe							;sign eax and put it to rax for address alignement
 	mov BYTE [rsp + 32 + rax], dl	;dl is juste a byte register that contain 'i'
-
-	; lea rsi, [rsp + 32 + rax]	  	;pointer to print
-	; mov eax, 1        				; write(
-	; mov edi, 1        				;   STDOUT_FILENO,
-	; ; lea rsi, [rdi]      			;   "Hello, world!\n",
-	; mov rdx, 1   					;   sizeof("Hello, world!\n")
-	; syscall           				; );
-
 	jmp .init
 
 .shuffle:
@@ -92,14 +84,6 @@ cipher:
 	jmp .shuffle + 8
 
 .keystream:
-
-	; lea rsi, [rsp + 32]	  ;pointer to print
-	; mov eax, 1        ; write(
-	; mov edi, 1        ;   STDOUT_FILENO,
-	; ; lea rsi, [rdi]      ;   "Hello, world!\n",
-	; mov rdx, 255   	;   sizeof("Hello, world!\n")
-	; syscall           ; );
-
 	mov DWORD [rsp + 24], 0			; i = 0
 	mov DWORD [rsp + 28], 0			; j = 0
 
@@ -199,14 +183,3 @@ cipher:
 	mov	rsp, rbp
 	pop	rbp
 	ret
-
-	; mov rsi, [rsp]	  ;pointer to print
-	; mov eax, 1        ; write(
-	; mov edi, 1        ;   STDOUT_FILENO,
-	; ; lea rsi, [rdi]      ;   "Hello, world!\n",
-	; mov edx, DWORD [rsp + 16]   	;   sizeof("Hello, world!\n")
-	; syscall           ; );
-
-	; mov rax, 60       ; exit(
-	; mov rdi, 0        ;   EXIT_SUCCESS
-	; syscall           ; );

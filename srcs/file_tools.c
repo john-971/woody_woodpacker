@@ -1,6 +1,6 @@
 #include "../includes/woody.h"
 
-int		open_file(char *name)
+int		open_file(char *name, t_info info)
 {
 	int fd;
 
@@ -8,24 +8,26 @@ int		open_file(char *name)
 	if (fd == -1)
 	{
 		fprintf(stderr, "%s : %s", strerror(errno), name);
+		clean_exit(info);
 		exit(EXIT_FAILURE);	
 	}
 	return (fd);
 }
 
-size_t		get_file_size(int fd)
+size_t		get_file_size(int fd, t_info info)
 {
 	struct stat stat;
 
 	if (syscall(SYS_fstat, fd, &stat) == -1)
 	{
 		fprintf(stderr, "%s ", strerror(errno));
+		clean_exit(info);
 		exit(EXIT_FAILURE);
 	}
 	return (stat.st_size);
 }
 
-int		create_file(void)
+int		create_file(t_info info)
 {
 	int fd;
 
@@ -33,23 +35,59 @@ int		create_file(void)
 	if (fd == -1)
 	{
 		fprintf(stderr, "%s : %s", strerror(errno), "woody");
+		clean_exit(info);
 		exit(EXIT_FAILURE);	
 	}
 	return (fd);
 }
 
-t_info		map_file(char *file_name, t_info info)
+void		map_file(char *file_name, t_info *info)
 {
-	void *file;
+	void 	*file;
 	
 
-	info.file_size = get_file_size(info.fd);
-	printf("File size : %lu\n", info.file_size);
-	if ((file = mmap(0, info.file_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, info.fd, 0)) == MAP_FAILED)
+	info->file_size = get_file_size(info->fd, *info);
+	printf("File size : %lu\n", info->file_size);
+	if ((file = mmap(0, info->file_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, info->fd, 0)) == MAP_FAILED)
 	{
 		fprintf(stderr, "%s : %s", strerror(errno), file_name);
+		clean_exit(*info);
 		exit(EXIT_FAILURE);
 	}
-	info.file = file;
-	return (info);
+	info->file = file;
+}
+
+void		init(t_info *info, char **argv)
+{
+	char 	*keystream;
+	
+	keystream = ft_memalloc(sizeof(char) * 256);
+	if (keystream == NULL)
+		exit(EXIT_FAILURE);
+
+	ft_memset(info, 0, sizeof(t_info));
+
+	info->key = manage_key(*info, argv[2]);
+	info->fd = open_file(argv[1], *info);
+	info->new_fd = create_file(*info);
+	info->exploit_size = (char *)&print_woody_end - (char *)&print_woody;
+	info->exploit_size += (char *)&end_decipher - (char *)&decipher;
+	info->keystream = keystream;
+	
+
+	map_file(argv[1], info);
+}
+
+void		clean_exit(t_info info)
+{
+	if (info.file)
+		munmap(info.file, info.file_size);
+	if (info.fd != 0)
+		close(info.fd);
+	if (info.new_fd != 0)
+		close(info.new_fd);
+	if (info.keystream)
+		free(info.keystream);
+	if (info.key)
+		free(info.key);
 }

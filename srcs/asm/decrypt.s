@@ -3,6 +3,9 @@ section .text
 global	decipher
 global 	end_decipher
 
+global  input_diff
+global  input_len
+global  woody_diff
 
 decipher:
 
@@ -15,13 +18,6 @@ decipher:
 	movsxd rdx, [rel input_diff]
 	sub rax, rdx						; get input pointer
 	mov QWORD [rsp + 8], rax			; save input pointer
-
-	; mov rax, 10							; syscall mprotect
-	; mov rcx, QWORD [rsp + 8]
-	; and rcx, 4095
-	 
-
-
 	mov eax, DWORD [rsp]				; i
 	mov ecx, DWORD [rel input_len]		; input_len
 	cmp eax, ecx
@@ -45,7 +41,7 @@ decipher:
 
 .exit:
 
-	xor edi, edi
+	xor rdi, rdi
 	xor rsi, rsi
 	xor rdx, rdx
 	lea rax, [rel decipher]
@@ -55,14 +51,9 @@ decipher:
 	xor rcx, rcx
 	mov	rsp, rbp
 	pop	rbp
-
 	jmp rax
-	; mov rax, QWORD [rsp]
-	; mov	rsp, rbp
-	; pop	rbp
-	; ret
 
-input_diff:	dd 0x43	; C
-input_len: 	dd 0x90 ; Y
-woody_diff: dd 0x5a	; Z
+input_diff:	dd 0x42424242	; permet de calculer l'adresse du debut du dechiffrement
+input_len: 	dd 0x43434343 	; la longeur de la zone à dechiffrer
+woody_diff: dd 0x44444444	; permet de retrouver la fonction woody
 end_decipher:

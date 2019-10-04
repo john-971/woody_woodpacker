@@ -26,7 +26,6 @@ print_woody:
 
 diff: dd 0x41414141
 msg: db "....WOODY....", 10
-; msglen: equ $ - msg
 print_woody_end:
 
 
