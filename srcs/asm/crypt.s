@@ -15,7 +15,7 @@ cipher:
 	mov DWORD [rsp + 28], 0			;j = 0
 									;rsp + 32 = tab
 	mov QWORD [rsp + 288], rcx		;rsp + 288 = keystream
-	mov DWORD [rsp + 296], -1		;k = -1 		/!\ changer pour gagner de la stack
+	mov DWORD [rsp + 296], -1		;k = -1
 	jmp .init
 
 .init:								;Create tab[255] = 0,1,2,3...255

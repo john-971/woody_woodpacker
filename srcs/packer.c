@@ -69,8 +69,6 @@ Elf64_Phdr				*search_segment(t_info *info, uint32_t perm, uint8_t check_size)
 					cave_size = pheader[i + 1].p_offset - (pheader[i].p_offset + pheader[i].p_filesz);
 					if ((int)cave_size > ((int)info->exploit_size + 256 + ALIGN))
 					{
-						// debug("Found segment with enough space\n");
-						// printf("Cave size : %x (%d)\n", cave_size, cave_size);
 						return (&pheader[i]);
 					}
 				}
@@ -84,9 +82,10 @@ Elf64_Phdr				*search_segment(t_info *info, uint32_t perm, uint8_t check_size)
 	return (NULL);
 }
 
-static void			set_right_perm(t_info *info, Elf64_Phdr *current_segment)
+static uint8_t			set_right_perm(t_info *info, Elf64_Phdr *current_segment)
 {
 	Elf64_Phdr		*segment_txt;
+	uint8_t			is_text = 1;
 
 	if (current_segment->p_flags != (PF_R + PF_X) && current_segment->p_flags != (PF_R + PF_X + PF_W))
 	{
@@ -98,8 +97,10 @@ static void			set_right_perm(t_info *info, Elf64_Phdr *current_segment)
 			exit(EXIT_FAILURE);
 		}
 		segment_txt->p_flags = (PF_R + PF_X + PF_W);
+		is_text = 0;
 	}
 	current_segment->p_flags = (PF_R + PF_X + PF_W);
+	return (is_text);
 }
 
 /**
@@ -121,46 +122,41 @@ void				packer(t_info *info, Elf64_Phdr *pheader)
 	uint32_t		woody_offset;
 	uint32_t		decipher_offset;
 	Elf64_Shdr		*section;
-	
+	uint8_t			is_text;
+	uint32_t		cipher_len;
 	
 	header = (Elf64_Ehdr *)info->file;
-	
-	set_right_perm(info, pheader);
+	is_text = set_right_perm(info, pheader);
 
 	woody_offset = pheader->p_offset + pheader->p_filesz;
 	alignement = align(woody_offset);
 	woody_offset += align(woody_offset);
 
-	// printf("WOODY OFFSET : %x\nWOODY SIZE : %x\n", woody_offset, woody_size);
 	ft_memcpy(memory_protect(info->file + woody_offset, info), (void *)&print_woody, woody_size);
-	
-	// printf("OLD ENTRY : %lx\n", header->e_entry);
-
 	fill_asm_var(memory_protect(info->file + woody_offset + ((void *)&diff - (void *)&print_woody), info), (pheader->p_vaddr + pheader->p_memsz + alignement) - header->e_entry);
-
 	section = section_d_assaut(info, header->e_entry);
-	// printf("offset : %lx\naddr : %lx\nsize : %lx\n", section->sh_offset, section->sh_addr, section->sh_size);
-	// printf("START CIPHER : %lx\n", section->sh_offset + (header->e_entry - section->sh_addr));
-	cipher(memory_protect(info->file + section->sh_offset + (header->e_entry - section->sh_addr), info), info->key, section->sh_size - (header->e_entry - section->sh_addr), info->keystream);
+
+	printf("")
+	if (is_text)
+		cipher_len = (section->sh_size - (header->e_entry - section->sh_addr)) + woody_size + align(woody_offset);
+	else
+		cipher_len = section->sh_size - (header->e_entry - section->sh_addr);
+	printf("In text ? %s\n", is_text == 1 ? "oui" : "non");
+	cipher(memory_protect(info->file + section->sh_offset + (header->e_entry - section->sh_addr), info), info->key, cipher_len, info->keystream);
 	
 	decipher_offset = woody_offset + woody_size;
 	alignement += align(decipher_offset);
 	decipher_offset += align(decipher_offset);
-	
 	ft_memcpy(memory_protect(info->file + decipher_offset, info), (void *)&decipher, decipher_size);
 	ft_memcpy(memory_protect(info->file + decipher_offset + decipher_size, info), info->keystream, 256);
-
-	// printf("input diff : %lx (%ld)\n", (pheader->p_vaddr + pheader->p_memsz + alignement + woody_size) - header->e_entry, (pheader->p_vaddr + pheader->p_memsz + alignement + woody_size) - header->e_entry);
 	fill_asm_var(memory_protect(info->file + decipher_offset + ((void *)&input_diff - (void *)&decipher), info), (pheader->p_vaddr + pheader->p_memsz + alignement + woody_size) - header->e_entry);
-	fill_asm_var(memory_protect(info->file + decipher_offset + ((void *)&input_len - (void *)&decipher), info), section->sh_size - (header->e_entry - section->sh_addr));
+	fill_asm_var(memory_protect(info->file + decipher_offset + ((void *)&input_len - (void *)&decipher), info), cipher_len);
 	fill_asm_var(memory_protect(info->file + decipher_offset + ((void *)&woody_diff - (void *)&decipher), info), decipher_offset - woody_offset);
 	
-
 	header->e_version = 42;
 	header->e_entry = pheader->p_vaddr + pheader->p_memsz + woody_size + alignement;
-	// printf("Final Entry point (decipher) : %lx\n", header->e_entry);
-	pheader->p_memsz += info->exploit_size + align(woody_size) + 256;	//exploit size + alignement
-	pheader->p_filesz += info->exploit_size + align(woody_size) + 256;
+	pheader->p_memsz += info->exploit_size + alignement + 256;	//exploit size + alignement
+	pheader->p_filesz += info->exploit_size + alignement + 256;
 
 	write(info->new_fd, info->file, info->file_size);
 	print_key(info->key);

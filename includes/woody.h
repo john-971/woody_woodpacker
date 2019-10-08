@@ -14,10 +14,7 @@
 #include <sys/mman.h>
 #include "../srcs/libft/includes/libft.h"
 
-
 #define 		ALIGN 16
-#define 		PAGE_SIZE 4096
-
 
 extern int		input_diff;
 extern int		input_len;
@@ -59,14 +56,12 @@ void			print_pecker(void);
 /*
 *	File_tools.c
 */
-
 int				open_file(char *name, t_info *info);
 int				create_file(t_info *info);
 void			map_file(char *file_name, t_info *info);
 void			init(t_info *info, char **argv);
 void			clean_exit(t_info *info);
 void			*memory_protect(char *ptr, t_info *info);
-
 
 /*
 *	Key.c

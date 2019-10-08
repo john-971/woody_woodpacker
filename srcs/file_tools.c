@@ -16,7 +16,7 @@ int					open_file(char *name, t_info *info)
 
 void				*memory_protect(char *ptr, t_info *info)
 {
-	printf("start : %p | check : %p | end : %p\n",info->file, ptr, info->end_file);
+	// printf("start : %p | check : %p | end : %p\n",info->file, ptr, info->end_file);
 	if (ptr >= info->end_file)
 	{
 		ft_putstr_fd("corrupted binary, we exit", 2);
