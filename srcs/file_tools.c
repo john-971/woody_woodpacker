@@ -16,7 +16,8 @@ int					open_file(char *name, t_info *info)
 
 void				*memory_protect(char *ptr, t_info *info)
 {
-	if (&ptr >= &(*info.end_file))
+	printf("start : %p | check : %p | end : %p\n",info->file, ptr, info->end_file);
+	if (ptr >= info->end_file)
 	{
 		ft_putstr_fd("corrupted binary, we exit", 2);
 		clean_exit(info);
@@ -57,7 +58,7 @@ void				map_file(char *file_name, t_info *info)
 {
 	void 			*file;
 	
-	info->file_size = get_file_size(info->fd, *info);
+	info->file_size = get_file_size(info->fd, info);
 	printf("File size : %lu\n", info->file_size);
 	if ((file = mmap(0, info->file_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, info->fd, 0)) == MAP_FAILED)
 	{
@@ -79,8 +80,8 @@ void				init(t_info *info, char **argv)
 
 	ft_memset(info, 0, sizeof(t_info));
 
-	info->key = manage_key(*info, argv[2]);
-	info->fd = open_file(argv[1], *info);
+	info->key = manage_key(info, argv[2]);
+	info->fd = open_file(argv[1], info);
 	info->new_fd = create_file(info);
 	info->exploit_size = (char *)&print_woody_end - (char *)&print_woody;
 	info->exploit_size += (char *)&end_decipher - (char *)&decipher;
@@ -90,14 +91,14 @@ void				init(t_info *info, char **argv)
 
 void				clean_exit(t_info *info)
 {
-	if (info.file)
-		munmap(info.file, info.file_size);
-	if (info.fd)
-		close(info.fd);
-	if (info.new_fd)
-		close(info.new_fd);
-	if (info.keystream)
-		free(info.keystream);
-	if (info.key)
-		free(info.key);
+	if (info->file)
+		munmap(info->file, info->file_size);
+	if (info->fd)
+		close(info->fd);
+	if (info->new_fd)
+		close(info->new_fd);
+	if (info->keystream)
+		free(info->keystream);
+	if (info->key)
+		free(info->key);
 }
