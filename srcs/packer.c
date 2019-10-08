@@ -18,16 +18,17 @@ static void				fill_asm_var(void *ptr, int value_tofill)
 	*match = value_tofill;
 }
 
+/**
+ * We are searching section based on given segment address
+ **/
 static Elf64_Shdr		*section_d_assaut(t_info info, Elf64_Addr addr)
 {
 	Elf64_Ehdr 			*header;
 	Elf64_Shdr  		*section;
-	// Elf64_Shdr  		*str_tab;
 	int 				i = -1;
 
 	header = (Elf64_Ehdr *)info.file;
-	section = (Elf64_Shdr *)((uint8_t *)info.file + header->e_shoff);
-	// str_tab = &section[header->e_shstrndx];
+	section = (Elf64_Shdr *)memory_protect(info.file + header->e_shoff, info);
 
 	while (i++ < header->e_shnum - 1)
 	{
@@ -35,7 +36,6 @@ static Elf64_Shdr		*section_d_assaut(t_info info, Elf64_Addr addr)
 		{
 			if (section[i].sh_addr <= addr && section[i + 1].sh_addr > addr)
 			{
-				// printf("We try section: [%i] %s\n", i, (char *)((uint8_t *)info.file + (str_tab->sh_offset + section[i].sh_name)));
 				return (&section[i]);
 			}
 		}
@@ -45,6 +45,10 @@ static Elf64_Shdr		*section_d_assaut(t_info info, Elf64_Addr addr)
 	exit(EXIT_FAILURE);
 }
 
+/**
+ * If perm is given, we search a segment based on perm
+ * if check_size is TRUE we also check if this segment had enough space for our exploit
+ **/
 Elf64_Phdr				*search_segment(t_info info, uint32_t perm, uint8_t check_size)
 {
 	Elf64_Ehdr 			*header;
@@ -53,7 +57,7 @@ Elf64_Phdr				*search_segment(t_info info, uint32_t perm, uint8_t check_size)
 	int					i = -1;
 	
 	header = (Elf64_Ehdr *)info.file;
-	pheader = (Elf64_Phdr *)(info.file + header->e_phoff);
+	pheader = (Elf64_Phdr *)memory_protect(info.file + header->e_phoff, info);
 	while(i++ < header->e_phnum)
 	{
 		if (pheader[i].p_type == PT_LOAD && i + 1 < header->e_phnum)
@@ -63,15 +67,11 @@ Elf64_Phdr				*search_segment(t_info info, uint32_t perm, uint8_t check_size)
 				if (check_size == 1)
 				{
 					cave_size = pheader[i + 1].p_offset - (pheader[i].p_offset + pheader[i].p_filesz);
-					if ((int)cave_size > ((int)info.exploit_size + 256))
+					if ((int)cave_size > ((int)info.exploit_size + 256 + ALIGN))
 					{
 						// debug("Found segment with enough space\n");
 						// printf("Cave size : %x (%d)\n", cave_size, cave_size);
 						return (&pheader[i]);
-					}
-					else
-					{
-						// debug("Not enough room in the requested segment\n");
 					}
 				}
 				else
@@ -84,21 +84,11 @@ Elf64_Phdr				*search_segment(t_info info, uint32_t perm, uint8_t check_size)
 	return (NULL);
 }
 
-void				packer(t_info info, Elf64_Phdr *pheader)
+static void			set_right_perm(t_info info, Elf64_Phdr *current_segment)
 {
-	Elf64_Ehdr 		*header;
 	Elf64_Phdr		*segment_txt;
-	uint32_t		woody_size = ((char *)&print_woody_end - (char *)&print_woody);
-	uint32_t		decipher_size = (char *)&end_decipher - (char *)&decipher;
-	uint32_t		alignement;
-	uint32_t		woody_offset;
-	uint32_t		decipher_offset;
-	Elf64_Shdr		*section;
-	
-	
-	header = (Elf64_Ehdr *)info.file;
 
-	if (pheader->p_flags != (PF_R + PF_X) && pheader->p_flags != (PF_R + PF_X + PF_W))
+	if (current_segment->p_flags != (PF_R + PF_X) && current_segment->p_flags != (PF_R + PF_X + PF_W))
 	{
 		segment_txt = search_segment(info, PF_R + PF_X, 0);
 		if (segment_txt == NULL)
@@ -109,10 +99,34 @@ void				packer(t_info info, Elf64_Phdr *pheader)
 		}
 		segment_txt->p_flags = (PF_R + PF_X + PF_W);
 	}
-	// printf("Offset : %lx\nVaddr : %lx\nSize : %lx\n", pheader->p_offset, pheader->p_vaddr, pheader->p_filesz);
+	current_segment->p_flags = (PF_R + PF_X + PF_W);
+}
 
-	pheader->p_flags = (PF_R + PF_X + PF_W);
+/**
+ * This is the core of the program
+ * we first verify if we use segment text, otherwise we have to change perm of segment text too
+ * we inject print_woody code (our malicious exploit) and fill print_woody diff
+ * we cipher since actual program entry point to end of text segment 
+ * we inject in file our decipher function after print_woody (ciphered)
+ * we fill asm variable needed by our decipher function
+ * we write our keystream needed by our decipher function
+ * finally, we change the entry point to point to our deciphering function
+ **/
+void				packer(t_info info, Elf64_Phdr *pheader)
+{
+	Elf64_Ehdr 		*header;
+	uint32_t		woody_size = ((char *)&print_woody_end - (char *)&print_woody);
+	uint32_t		decipher_size = (char *)&end_decipher - (char *)&decipher;
+	uint32_t		alignement;
+	uint32_t		woody_offset;
+	uint32_t		decipher_offset;
+	Elf64_Shdr		*section;
 	
+	
+	header = (Elf64_Ehdr *)info.file;
+	
+	set_right_perm(info, pheader);
+
 	woody_offset = pheader->p_offset + pheader->p_filesz;
 	alignement = align(woody_offset);
 	woody_offset += align(woody_offset);

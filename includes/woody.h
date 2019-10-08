@@ -15,7 +15,7 @@
 #include "../srcs/libft/includes/libft.h"
 
 
-#define 		ALIGN 
+#define 		ALIGN 16
 #define 		PAGE_SIZE 4096
 
 
@@ -60,24 +60,24 @@ void			print_pecker(void);
 *	File_tools.c
 */
 
-int				open_file(char *name, t_info info);
-int				create_file(t_info info);
+int				open_file(char *name, t_info *info);
+int				create_file(t_info *info);
 void			map_file(char *file_name, t_info *info);
 void			init(t_info *info, char **argv);
-void			clean_exit(t_info info);
-void			*memory_protect(char *ptr, t_info info);
+void			clean_exit(t_info *info);
+void			*memory_protect(char *ptr, t_info *info);
 
 
 /*
 *	Key.c
 */
-char			*manage_key(t_info info, char *key);
+char			*manage_key(t_info *info, char *key);
 
 /*
 *	Packer.c
 */
-void			packer(t_info info, Elf64_Phdr *pheader);
-Elf64_Phdr		*search_segment(t_info info, uint32_t perm, uint8_t check_size);
+void			packer(t_info *info, Elf64_Phdr *pheader);
+Elf64_Phdr		*search_segment(t_info *info, uint32_t perm, uint8_t check_size);
 
 
 #endif

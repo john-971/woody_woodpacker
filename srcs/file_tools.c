@@ -1,6 +1,6 @@
 #include "../includes/woody.h"
 
-int					open_file(char *name, t_info info)
+int					open_file(char *name, t_info *info)
 {
 	int 			fd;
 
@@ -14,9 +14,9 @@ int					open_file(char *name, t_info info)
 	return (fd);
 }
 
-void				*memory_protect(char *ptr, t_info info)
+void				*memory_protect(char *ptr, t_info *info)
 {
-	if (&ptr >= &info.end_file)
+	if (&ptr >= &(*info.end_file))
 	{
 		ft_putstr_fd("corrupted binary, we exit", 2);
 		clean_exit(info);
@@ -26,7 +26,7 @@ void				*memory_protect(char *ptr, t_info info)
 
 }
 
-static size_t		get_file_size(int fd, t_info info)
+static size_t		get_file_size(int fd, t_info *info)
 {
 	struct stat 	stat;
 
@@ -39,7 +39,7 @@ static size_t		get_file_size(int fd, t_info info)
 	return (stat.st_size);
 }
 
-int					create_file(t_info info)
+int					create_file(t_info *info)
 {
 	int 			fd;
 
@@ -57,13 +57,12 @@ void				map_file(char *file_name, t_info *info)
 {
 	void 			*file;
 	
-
 	info->file_size = get_file_size(info->fd, *info);
-	// printf("File size : %lu\n", info->file_size);
+	printf("File size : %lu\n", info->file_size);
 	if ((file = mmap(0, info->file_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, info->fd, 0)) == MAP_FAILED)
 	{
 		fprintf(stderr, "%s : %s", strerror(errno), file_name);
-		clean_exit(*info);
+		clean_exit(info);
 		exit(EXIT_FAILURE);
 	}
 	info->file = file;
@@ -82,14 +81,14 @@ void				init(t_info *info, char **argv)
 
 	info->key = manage_key(*info, argv[2]);
 	info->fd = open_file(argv[1], *info);
-	info->new_fd = create_file(*info);
+	info->new_fd = create_file(info);
 	info->exploit_size = (char *)&print_woody_end - (char *)&print_woody;
 	info->exploit_size += (char *)&end_decipher - (char *)&decipher;
 	info->keystream = keystream;
 	map_file(argv[1], info);
 }
 
-void				clean_exit(t_info info)
+void				clean_exit(t_info *info)
 {
 	if (info.file)
 		munmap(info.file, info.file_size);

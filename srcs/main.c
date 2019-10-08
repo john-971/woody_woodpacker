@@ -1,6 +1,10 @@
 #include "../includes/woody.h"
 
-void			check_header(t_info info)
+/**
+ * This function check the file magic number and the arch
+ * we support only efl 64b
+ **/
+void			check_header(t_info *info)
 {
 	Elf64_Ehdr 	*header;
 
@@ -26,35 +30,32 @@ void			check_header(t_info info)
 	exit (EXIT_FAILURE);
 }
 
+/**
+ * First, we try to inject our code into text segment
+ * else, we put our code in whatever segment who had enough space
+ **/
 int 			main(int argc, char **argv)
 {
-	t_info 		info;
+	t_info 		*info;
 	Elf64_Phdr 	*pheader;
-	
-
-	
 	
 	if (argc < 2)
 	{
 		print_usage(argv[0]);
 		return (1);
 	}
-	init(&info, argv);
+	init(info, argv);
 	check_header(info);
 
-	// On essaie le segment text
 	pheader = search_segment(info, PF_R + PF_X, 1);
 	if (pheader != NULL)
 	{
-		// debug("We are in segment text\n");
 		packer(info, pheader);
 		return (0);
 	}
-	// debug("Trying another place\n");
 	pheader = search_segment(info, 0, 1);
 	if (pheader != NULL)
 	{
-		// debug("We are NOT in segment text\n");
 		packer(info, pheader);
 		return (0);
 	}

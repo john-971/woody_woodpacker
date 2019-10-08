@@ -2,3 +2,6 @@
 a.out
 peda*
 Ressources/*
+**/*.o
+woody
+woody_woodpacker

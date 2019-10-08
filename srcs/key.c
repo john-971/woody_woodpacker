@@ -1,6 +1,8 @@
 #include "../includes/woody.h"
 
-
+/**
+ * Generate a pseudo random key based on /dev/urandom output
+ **/
 static char			*generate_random_key(t_info info)
 {
 	int			    fd;
@@ -19,6 +21,9 @@ static char			*generate_random_key(t_info info)
 	return (key);
 }
 
+/**
+ * Check if user had give a key param, otherwise we create our own key
+ **/
 char			    *manage_key(t_info info, char *key)
 {
 	char 		    *new_key;
