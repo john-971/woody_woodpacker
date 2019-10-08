@@ -10,8 +10,8 @@ print_woody:
 ;   int 0xcc
   mov eax, 1        ; write(
   mov edi, 1        ;   STDOUT_FILENO,
-  lea rsi, [rel msg]      ;   "Hello, world!\n",
-  mov rdx, 14   	;   sizeof("Hello, world!\n")
+  lea rsi, [rel msg];   string ,
+  mov rdx, 14   	;   len
   syscall           ; );
 
   xor rdi, rdi

@@ -75,7 +75,6 @@ cipher:
 	cdqe
 	mov BYTE [rsp + 32 + rax], dl	; tab[j] = esi
 
-
 	mov eax, DWORD [rsp + 24]		; i
 	mov edx, edi
 	cdqe
@@ -177,8 +176,6 @@ cipher:
 	jmp .rc4 + 8
 
 .exit:
-
-
 	mov rax, QWORD [rsp + 288]
 	mov	rsp, rbp
 	pop	rbp

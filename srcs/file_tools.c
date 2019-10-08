@@ -1,8 +1,8 @@
 #include "../includes/woody.h"
 
-int		open_file(char *name, t_info info)
+int					open_file(char *name, t_info info)
 {
-	int fd;
+	int 			fd;
 
 	fd = open(name, O_RDONLY);
 	if (fd == -1)
@@ -14,9 +14,21 @@ int		open_file(char *name, t_info info)
 	return (fd);
 }
 
-size_t		get_file_size(int fd, t_info info)
+void				*memory_protect(char *ptr, t_info info)
 {
-	struct stat stat;
+	if (&ptr >= &info.end_file)
+	{
+		ft_putstr_fd("corrupted binary, we exit", 2);
+		clean_exit(info);
+		exit(EXIT_FAILURE);
+	}
+	return (ptr);
+
+}
+
+static size_t		get_file_size(int fd, t_info info)
+{
+	struct stat 	stat;
 
 	if (syscall(SYS_fstat, fd, &stat) == -1)
 	{
@@ -27,11 +39,11 @@ size_t		get_file_size(int fd, t_info info)
 	return (stat.st_size);
 }
 
-int		create_file(t_info info)
+int					create_file(t_info info)
 {
-	int fd;
+	int 			fd;
 
-	fd = open("woody", O_RDWR | O_CREAT, (mode_t)0766);
+	fd = open("woody", O_RDWR | O_CREAT | O_TRUNC, (mode_t)0766);
 	if (fd == -1)
 	{
 		fprintf(stderr, "%s : %s", strerror(errno), "woody");
@@ -41,13 +53,13 @@ int		create_file(t_info info)
 	return (fd);
 }
 
-void		map_file(char *file_name, t_info *info)
+void				map_file(char *file_name, t_info *info)
 {
-	void 	*file;
+	void 			*file;
 	
 
 	info->file_size = get_file_size(info->fd, *info);
-	printf("File size : %lu\n", info->file_size);
+	// printf("File size : %lu\n", info->file_size);
 	if ((file = mmap(0, info->file_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, info->fd, 0)) == MAP_FAILED)
 	{
 		fprintf(stderr, "%s : %s", strerror(errno), file_name);
@@ -55,11 +67,12 @@ void		map_file(char *file_name, t_info *info)
 		exit(EXIT_FAILURE);
 	}
 	info->file = file;
+	info->end_file = info->file + info->file_size;
 }
 
-void		init(t_info *info, char **argv)
+void				init(t_info *info, char **argv)
 {
-	char 	*keystream;
+	char 			*keystream;
 	
 	keystream = ft_memalloc(sizeof(char) * 256);
 	if (keystream == NULL)
@@ -73,18 +86,16 @@ void		init(t_info *info, char **argv)
 	info->exploit_size = (char *)&print_woody_end - (char *)&print_woody;
 	info->exploit_size += (char *)&end_decipher - (char *)&decipher;
 	info->keystream = keystream;
-	
-
 	map_file(argv[1], info);
 }
 
-void		clean_exit(t_info info)
+void				clean_exit(t_info info)
 {
 	if (info.file)
 		munmap(info.file, info.file_size);
-	if (info.fd != 0)
+	if (info.fd)
 		close(info.fd);
-	if (info.new_fd != 0)
+	if (info.new_fd)
 		close(info.new_fd);
 	if (info.keystream)
 		free(info.keystream);

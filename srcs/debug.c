@@ -24,7 +24,7 @@ void	print_key(char *key)
 		}
 	}
 	i = 0;
-	ft_putstr("The key : [");
+	ft_putstr("The key : [\033[01;33m");
 	while (i < 16)
 	{
 		if (is_print)
@@ -34,5 +34,22 @@ void	print_key(char *key)
 		i++;
 		
 	}
-	printf("]\n");
+	printf("\033[0m]\n");
+}
+
+void			print_pecker(void)
+{
+	char		woody[200];
+	int			fd;
+	int			count_read;
+	
+	fd = open("./srcs/woody.txt", O_RDONLY);
+	if (fd != -1)
+	{
+		while ((count_read = read(fd, woody, 199)))
+		{
+			woody[count_read] = '\0';
+			ft_putstr(woody);
+		}		
+	}
 }

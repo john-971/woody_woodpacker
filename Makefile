@@ -10,7 +10,7 @@
 #                                                                              #
 #******************************************************************************#
 
-CC = gcc
+CC = gcc $(FLAGS)
 FLAGS = -Wall -Werror -Wextra $(INCLUDES)
 AS=nasm -f elf64
 
@@ -27,7 +27,8 @@ SOURCES_ASM = 	./srcs/asm/print.s\
 SOURCES = 		./srcs/main.c \
 				./srcs/debug.c \
 				./srcs/file_tools.c \
-				./srcs/packer.c
+				./srcs/packer.c	\
+				./srcs/key.c
 
 OBJ = $(SOURCES:.c=.o) $(SOURCES_ASM:.s=.o)
 
