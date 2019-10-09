@@ -26,16 +26,16 @@ void			check_header(t_info *info)
 					return ;
 				}
 				else
-					ft_putstr_fd("Only support 64b, we exit", 2);
+					ft_putstr_fd("Only support 64b, we exit\n", 2);
 			}
 			else
-				ft_putstr_fd("corrupted binary, we exit", 2);
+				ft_putstr_fd("corrupted binary, we exit\n", 2);
 		}
 		else
-			ft_putstr_fd("Unknow file magic, we exit", 2);
+			ft_putstr_fd("Unknow file magic, we exit\n", 2);
 	}
 	else
-		ft_putstr_fd("corrupted binary, we exit", 2);
+		ft_putstr_fd("corrupted binary, we exit\n", 2);
 	clean_exit(info);
 	exit (EXIT_FAILURE);
 }

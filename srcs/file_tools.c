@@ -74,7 +74,7 @@ void				init(t_info *info, char **argv)
 {
 	char 			*keystream;
 	
-	keystream = ft_memalloc(sizeof(char) * 256);
+	keystream = ft_memalloc(sizeof(char) * KEYSTREAM_LEN);
 	if (keystream == NULL)
 		exit(EXIT_FAILURE);
 
@@ -84,7 +84,7 @@ void				init(t_info *info, char **argv)
 	info->fd = open_file(argv[1], info);
 	info->new_fd = create_file(info);
 	info->exploit_size = (char *)&print_woody_end - (char *)&print_woody;
-	info->exploit_size += (char *)&end_decipher - (char *)&decipher;
+	info->exploit_size += ((char *)&end_decipher - (char *)&decipher) + KEYSTREAM_LEN; //woody size + decipher size + keystream len
 	info->keystream = keystream;
 	map_file(argv[1], info);
 }

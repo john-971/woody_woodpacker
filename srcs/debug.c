@@ -24,7 +24,7 @@ void	print_key(char *key)
 		}
 	}
 	i = 0;
-	ft_putstr("The key : [\033[01;33m");
+	ft_putstr("Cipher key : [\033[01;33m");
 	while (i < 16)
 	{
 		if (is_print)

@@ -15,6 +15,7 @@
 #include "../srcs/libft/includes/libft.h"
 
 #define 		ALIGN 16
+#define			KEYSTREAM_LEN 256
 
 extern int		input_diff;
 extern int		input_len;

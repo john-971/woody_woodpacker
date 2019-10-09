@@ -67,7 +67,7 @@ Elf64_Phdr				*search_segment(t_info *info, uint32_t perm, uint8_t check_size)
 				if (check_size == 1)
 				{
 					cave_size = pheader[i + 1].p_offset - (pheader[i].p_offset + pheader[i].p_filesz);
-					if ((int)cave_size > ((int)info->exploit_size + 256 + ALIGN))
+					if ((int)cave_size > ((int)info->exploit_size + ALIGN))
 					{
 						return (&pheader[i]);
 					}
@@ -136,7 +136,7 @@ void				packer(t_info *info, Elf64_Phdr *pheader)
 	fill_asm_var(memory_protect(info->file + woody_offset + ((void *)&diff - (void *)&print_woody), info), (pheader->p_vaddr + pheader->p_memsz + alignement) - header->e_entry);
 	section = section_d_assaut(info, header->e_entry);
 
-	printf("")
+	printf("Len cipher : %lx\n", (section->sh_size - (header->e_entry - section->sh_addr)));
 	if (is_text)
 		cipher_len = (section->sh_size - (header->e_entry - section->sh_addr)) + woody_size + align(woody_offset);
 	else
@@ -148,15 +148,15 @@ void				packer(t_info *info, Elf64_Phdr *pheader)
 	alignement += align(decipher_offset);
 	decipher_offset += align(decipher_offset);
 	ft_memcpy(memory_protect(info->file + decipher_offset, info), (void *)&decipher, decipher_size);
-	ft_memcpy(memory_protect(info->file + decipher_offset + decipher_size, info), info->keystream, 256);
+	ft_memcpy(memory_protect(info->file + decipher_offset + decipher_size, info), info->keystream, KEYSTREAM_LEN);
 	fill_asm_var(memory_protect(info->file + decipher_offset + ((void *)&input_diff - (void *)&decipher), info), (pheader->p_vaddr + pheader->p_memsz + alignement + woody_size) - header->e_entry);
 	fill_asm_var(memory_protect(info->file + decipher_offset + ((void *)&input_len - (void *)&decipher), info), cipher_len);
 	fill_asm_var(memory_protect(info->file + decipher_offset + ((void *)&woody_diff - (void *)&decipher), info), decipher_offset - woody_offset);
 	
 	header->e_version = 42;
 	header->e_entry = pheader->p_vaddr + pheader->p_memsz + woody_size + alignement;
-	pheader->p_memsz += info->exploit_size + alignement + 256;	//exploit size + alignement
-	pheader->p_filesz += info->exploit_size + alignement + 256;
+	pheader->p_memsz += info->exploit_size + alignement;
+	pheader->p_filesz += info->exploit_size + alignement;
 
 	write(info->new_fd, info->file, info->file_size);
 	print_key(info->key);
