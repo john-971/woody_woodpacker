@@ -136,20 +136,25 @@ void				packer(t_info *info, Elf64_Phdr *pheader)
 	fill_asm_var(memory_protect(info->file + woody_offset + ((void *)&diff - (void *)&print_woody), info), (pheader->p_vaddr + pheader->p_memsz + alignement) - header->e_entry);
 	section = section_d_assaut(info, header->e_entry);
 
-	printf("Len cipher : %lx\n", (section->sh_size - (header->e_entry - section->sh_addr)));
+	// printf("Woody start : %x\n", woody_offset);
+	// printf("Len cipher : %lx\n", section->sh_size);
+	// printf("Test bonne longueur: %lx | %lx\n", (woody_offset - alignement) - (section->sh_offset), section->sh_offset + ((woody_offset) - section->sh_offset));
+	// printf("Test bonne longueur: %lx\n", pheader->p_memsz - section->sh_size - (header->e_entry - section->sh_addr) - section->sh_addr);
+	// printf("Start cipher : %lx\n", section->sh_offset);
 	if (is_text)
-		cipher_len = (section->sh_size - (header->e_entry - section->sh_addr)) + woody_size + align(woody_offset);
+		cipher_len = ((woody_offset - 1) - section->sh_offset + woody_size);// section->sh_size//(section->sh_size - (header->e_entry - section->sh_addr));
 	else
-		cipher_len = section->sh_size - (header->e_entry - section->sh_addr);
+		cipher_len = ((woody_offset) - section->sh_offset);//(section->sh_size - (header->e_entry - section->sh_addr));
 	printf("In text ? %s\n", is_text == 1 ? "oui" : "non");
-	cipher(memory_protect(info->file + section->sh_offset + (header->e_entry - section->sh_addr), info), info->key, cipher_len, info->keystream);
+	cipher(memory_protect(info->file + section->sh_offset, info), info->key, cipher_len, info->keystream);
+	// cipher(memory_protect(info->file + section->sh_offset + (header->e_entry - section->sh_addr), info), info->key, cipher_len, info->keystream);
 	
 	decipher_offset = woody_offset + woody_size;
 	alignement += align(decipher_offset);
 	decipher_offset += align(decipher_offset);
 	ft_memcpy(memory_protect(info->file + decipher_offset, info), (void *)&decipher, decipher_size);
 	ft_memcpy(memory_protect(info->file + decipher_offset + decipher_size, info), info->keystream, KEYSTREAM_LEN);
-	fill_asm_var(memory_protect(info->file + decipher_offset + ((void *)&input_diff - (void *)&decipher), info), (pheader->p_vaddr + pheader->p_memsz + alignement + woody_size) - header->e_entry);
+	fill_asm_var(memory_protect(info->file + decipher_offset + ((void *)&input_diff - (void *)&decipher), info), (pheader->p_vaddr + pheader->p_memsz + alignement + woody_size) - section->sh_addr);
 	fill_asm_var(memory_protect(info->file + decipher_offset + ((void *)&input_len - (void *)&decipher), info), cipher_len);
 	fill_asm_var(memory_protect(info->file + decipher_offset + ((void *)&woody_diff - (void *)&decipher), info), decipher_offset - woody_offset);
 	

@@ -59,7 +59,7 @@ void				map_file(char *file_name, t_info *info)
 	void 			*file;
 	
 	info->file_size = get_file_size(info->fd, info);
-	printf("File size : %lu\n", info->file_size);
+	// printf("File size : %lu\n", info->file_size);
 	if ((file = mmap(0, info->file_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, info->fd, 0)) == MAP_FAILED)
 	{
 		fprintf(stderr, "%s : %s", strerror(errno), file_name);

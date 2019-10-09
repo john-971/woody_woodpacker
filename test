@@ -1,6 +1,7 @@
 Unable to init server: Could not connect: Connection refused
 
-(woody:17295): Gtk-WARNING **: 08:08:53.761: cannot open display: 
+(woody:19253): Gtk-WARNING **: 09:59:02.445: cannot open display: 
+Unknow file magic, we exit
 Usage: ./woody [OPTION...] [OPTION]... [MODULES]
 Try './woody --help' or './woody --usage' for more information.
 woody: not enough arguments
@@ -349,9 +350,12 @@ where options include:
 ./woody 
 
 woody: ./woody must be owned by uid 0 and have the setuid bit set
+Unknow file magic, we exit
+Unknow file magic, we exit
 ./woody: missing file operand
 Try './woody --help' for more information.
 ./woody: cannot open display ""
+Unknow file magic, we exit
 The databases in [/usr/local/share/applications, /usr/share/applications] could not be updated.
 Device argument is missing
 Usage : for recovering the updates committed by Windows :
@@ -375,9 +379,27 @@ Advanced : ntfsrecover [-b] [-c first-last] [-i] [-f] [-n] [-p count]
 	   -V : show version and exit
 gpgv: unknown type of key resource 'trustedkeys.kbx'
 gpgv: keyblock resource '/home/john/.gnupg/trustedkeys.kbx': General error
+gpgv: no valid OpenPGP data found.
+gpgv: the signature could not be verified.
+Please remember that the signature file (.sig or .asc)
+should be the first file given on the command line.
+./woody: missing mountpoint argument
+corrupted binary, we exit
+[1mdpkg-deb:[0m [1;31merror:[0m need an action option
 
-gpgv: signal Interrupt caught ... exiting
-Text file busy : woodygpgv: unknown type of key resource 'trustedkeys.kbx'
-gpgv: keyblock resource '/home/john/.gnupg/trustedkeys.kbx': General error
+Type dpkg-deb --help for help about manipulating *.deb files;
+Type dpkg --help for help about installing and deinstalling packages.
+You need to specify at least one of --clean, --create or --remove.
+Unknow file magic, we exit
+Usage: rdfdump [-v] <filename>
 
-gpgv: signal Interrupt caught ... exiting
+usage: ./woody x y refresh [-v|--verbose] [-f|--fbmode] [-x|--xorgmode]
+
+            x : the desired horizontal resolution (required)
+            y : the desired vertical resolution (required)
+      refresh : the desired refresh rate (required)
+ -v|--verbose : enable verbose printouts (traces each step of the computation)
+  -f|--fbmode : output an fbset(8)-style mode description
+ -x|--xorgmode : output an Xorg-style mode description (this is the default
+                if no mode description is requested)
+
