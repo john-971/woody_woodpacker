@@ -25,7 +25,7 @@ SOURCES_ASM = 	./srcs/asm/print.s\
 				./srcs/asm/decrypt.s
 
 SOURCES = 		./srcs/main.c \
-				./srcs/debug.c \
+				./srcs/output.c \
 				./srcs/file_tools.c \
 				./srcs/packer.c	\
 				./srcs/key.c
