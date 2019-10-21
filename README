@@ -1,13 +1,1 @@
-TODO :
-- Verifier le chiffrement 
-- Nettoyage
-
-NICE TO HAVE :
-- un dépacker ?
-- Compression
-
-
-
-commande pour tester tous les binaires :
-
-find /bin/ -type f -exec bash -c 'echo {}; ./woody_woodpacker {}' \; 2>test
+Un packer pour Elf 64bits (chiffrement Rc4) sans compression
